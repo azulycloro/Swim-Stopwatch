@@ -203,7 +203,7 @@ body { display: flex; height: 100vh; background-color: #f0f4f8; overflow: hidden
         
         <!-- Zona de gestión de fotos integrada -->
         <div id="photo-bottom-zone">
-          <button class="header-btn photo-btn" id="btn-add-photo" onclick="triggerCameraInput()">📷 Tomar Foto (Max 2)</button>
+          <button class="header-btn photo-btn" id="btn-add-photo" onclick="triggerCameraInput()">📷 Tomar Foto (0/4)</button>
           <input type="file" id="camera-file-input" accept="image/*" capture="environment" style="display: none;" onchange="handlePhotoSelect(event)">
         </div>
         <div id="photo-footer-panel"></div>
@@ -390,6 +390,161 @@ self.onmessage = function(e) {
     if (timer) { clearInterval(timer); timer = null; }
   }
 };`;
+  /* ==========================================================================
+   GESTIÓN DE FOTOGRAFÍAS DE TABLERO / OFICIALES (MÁXIMO 4 POR PRUEBA)
+   ========================================================================== */
+
+function triggerCameraInput() {
+  const h = heatsData[currentHeatId];
+  if (!h) return;
+  if (!h.attachedPhotos) h.attachedPhotos = [];
+  
+  if (h.attachedPhotos.length >= 4) {
+    alert("Se ha alcanzado el límite máximo de 4 fotografías para esta prueba.");
+    return;
+  }
+  document.getElementById('camera-file-input').click();
+}
+
+function handlePhotoSelect(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const h = heatsData[currentHeatId];
+  if (!h) return;
+  if (!h.attachedPhotos) h.attachedPhotos = [];
+
+  if (h.attachedPhotos.length >= 4) {
+    alert("Se ha alcanzado el límite máximo de 4 fotografías para esta prueba.");
+    event.target.value = "";
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const photoData = {
+      id: 'photo_' + Date.now(),
+      dataUrl: e.target.result,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+      name: file.name || `Foto_${h.attachedPhotos.length + 1}`
+    };
+    h.attachedPhotos.push(photoData);
+    renderPhotoPanel();
+    autoSaveToStorage();
+  };
+  reader.readAsDataURL(file);
+  event.target.value = "";
+}
+
+function renderPhotoPanel() {
+  const h = heatsData[currentHeatId];
+  const panel = document.getElementById('photo-footer-panel');
+  const btnAdd = document.getElementById('btn-add-photo');
+  if (!h || !panel) return;
+
+  if (!h.attachedPhotos) h.attachedPhotos = [];
+
+  // Actualizar etiqueta del botón con el conteo dinámico
+  if (btnAdd) {
+    btnAdd.innerText = `📷 Tomar Foto (${h.attachedPhotos.length}/4)`;
+    btnAdd.style.opacity = h.attachedPhotos.length >= 4 ? "0.6" : "1";
+  }
+
+  if (h.attachedPhotos.length === 0) {
+    panel.style.display = 'none';
+    panel.innerHTML = '';
+    return;
+  }
+
+  panel.style.display = 'flex';
+  panel.innerHTML = '';
+
+  h.attachedPhotos.forEach((photo, idx) => {
+    const item = document.createElement('div');
+    item.className = 'footer-photo-item';
+
+    const img = document.createElement('img');
+    img.className = 'footer-photo-thumb';
+    img.src = photo.dataUrl;
+    img.onclick = () => viewPhoto(idx);
+
+    const details = document.createElement('div');
+    details.className = 'footer-photo-details';
+
+    const title = document.createElement('div');
+    title.className = 'footer-photo-title';
+    title.innerText = `Foto ${idx + 1} de 4 (${photo.timestamp})`;
+
+    const filename = document.createElement('div');
+    filename.className = 'footer-photo-filename';
+    filename.innerText = photo.name || `Foto_${idx + 1}`;
+
+    details.appendChild(title);
+    details.appendChild(filename);
+
+    const actions = document.createElement('div');
+    actions.className = 'footer-photo-actions';
+
+    const btnView = document.createElement('button');
+    btnView.className = 'header-btn';
+    btnView.style.cssText = 'padding: 4px 8px; font-size: 11px;';
+    btnView.innerText = '👁️';
+    btnView.title = 'Ver fotografía';
+    btnView.onclick = () => viewPhoto(idx);
+
+    const btnDel = document.createElement('button');
+    btnDel.className = 'header-btn';
+    btnDel.style.cssText = 'padding: 4px 8px; font-size: 11px; color: #d32f2f; border-color: #ef9a9a;';
+    btnDel.innerText = '🗑️';
+    btnDel.title = 'Eliminar fotografía';
+    btnDel.onclick = () => deletePhoto(idx);
+
+    actions.appendChild(btnView);
+    actions.appendChild(btnDel);
+
+    item.appendChild(img);
+    item.appendChild(details);
+    item.appendChild(actions);
+
+    panel.appendChild(item);
+  });
+}
+
+function viewPhoto(index) {
+  const h = heatsData[currentHeatId];
+  if (!h || !h.attachedPhotos || !h.attachedPhotos[index]) return;
+  activeModalPhotoIndex = index;
+  const modalImg = document.getElementById('full-image-preview');
+  modalImg.src = h.attachedPhotos[index].dataUrl;
+  document.getElementById('image-modal').classList.add('open');
+}
+
+function closePhotoModal() {
+  activeModalPhotoIndex = null;
+  document.getElementById('image-modal').classList.remove('open');
+}
+
+function downloadPhotoModalActive() {
+  const h = heatsData[currentHeatId];
+  if (activeModalPhotoIndex === null || !h || !h.attachedPhotos[activeModalPhotoIndex]) return;
+  const photo = h.attachedPhotos[activeModalPhotoIndex];
+  const a = document.createElement('a');
+  a.href = photo.dataUrl;
+  a.download = `${getFormattedTournamentLabel()}_${h.name.replace(/\s+/g, '_')}_Foto_${activeModalPhotoIndex + 1}.png`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+function deletePhoto(index) {
+  const h = heatsData[currentHeatId];
+  if (!h || !h.attachedPhotos) return;
+  if (confirm(`¿Eliminar la Foto ${index + 1}?`)) {
+    h.attachedPhotos.splice(index, 1);
+    renderPhotoPanel();
+    autoSaveToStorage();
+  }
+}
 
 const blobWorker = new Blob([workerCode], { type: 'application/javascript' });
 const timerWorker = new Worker(URL.createObjectURL(blobWorker));
@@ -1093,6 +1248,7 @@ function loadHeatState(heatId) {
     setBigButton("START", "#2e7d32");
   }
   selectedSource = null;
+  renderPhotoPanel(); // <--- Renderiza fotos al cambiar de prueba
 }
 
 function renderLanes() {
@@ -1942,6 +2098,7 @@ function resetClock() {
     l.officialTime = "";
   });
   renderLanes();
+  renderPhotoPanel(); // <--- Limpia el panel de fotos
   autoSaveToStorage();
 }
 
