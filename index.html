@@ -1252,7 +1252,6 @@ function loadHeatState(heatId) {
 }
 
 function renderLanes() {
-  saveCurrentHeatState();
   const container = document.getElementById('lanes-container');
   container.innerHTML = "";
   const h = heatsData[currentHeatId];
@@ -1369,11 +1368,12 @@ function renderLanes() {
       updateLaneHeaderColor(laneNum);
       autoSaveToStorage();
     };
-    offInput.onkeydown = (e) => {
+offInput.onkeydown = (e) => {
       if (e.key === 'Enter') {
         applyFormatting(e.target);
         laneObj.officialTime = e.target.value;
         e.target.blur();
+        adjustSplitsToOfficial(laneNum); // NUEVA LLAMADA
         updateLaneHeaderColor(laneNum);
         autoSaveToStorage();
       }
@@ -1386,6 +1386,7 @@ function renderLanes() {
     adjustBtn.onclick = () => {
       applyFormatting(offInput);
       laneObj.officialTime = offInput.value;
+      adjustSplitsToOfficial(laneNum); // NUEVA LLAMADA
       updateLaneHeaderColor(laneNum);
       autoSaveToStorage();
     };
@@ -2028,7 +2029,43 @@ function recalculateLaneByNumber(laneNum) {
   });
   updateLaneHeaderColor(laneNum);
 }
+function adjustSplitsToOfficial(laneNum) {
+  const h = heatsData[currentHeatId];
+  if (!h) return;
+  
+  const laneObj = h.laneData.find(l => l.lane === laneNum);
+  if (!laneObj || !laneObj.officialTime) return;
 
+  // Convertir el tiempo oficial introducido a milisegundos
+  const officialMs = parseTimeToMs(laneObj.officialTime);
+  if (isNaN(officialMs) || officialMs <= 0) return;
+
+  // Encontrar cuál fue el último split marcado por el cronómetro
+  let lastValidIdx = -1;
+  for (let i = laneObj.splits.length - 1; i >= 0; i--) {
+    if (laneObj.splits[i] && laneObj.splits[i].totalMs !== null) {
+      lastValidIdx = i;
+      break;
+    }
+  }
+
+  // Si no hay splits tomados, no hay nada que ajustar
+  if (lastValidIdx === -1) return; 
+
+  const recordedTotalMs = laneObj.splits[lastValidIdx].totalMs;
+  if (recordedTotalMs <= 0) return;
+
+  // Calcular el factor de ratio (Diferencia porcentual entre oficial y cronometrado)
+  const ratio = officialMs / recordedTotalMs;
+
+  // Ajustar todos los splits acumulados de forma proporcional
+  for (let i = 0; i <= lastValidIdx; i++) {
+    laneObj.splits[i].totalMs = Math.round(laneObj.splits[i].totalMs * ratio);
+  }
+
+  // Refrescar los componentes visuales del carril para mostrar los nuevos parciales
+  recalculateLaneByNumber(laneNum);
+}
 function handleBigButtonClick() {
   const now = performance.now();
   if (now - lastBigButtonPressTime < 40) return;
