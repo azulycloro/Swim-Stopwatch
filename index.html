@@ -589,7 +589,6 @@ let coachName = "Juan Albarracin";
 let googleWebAppUrl = "";
 let cardIdCounter = 0;
 let selectedSource = null;
-let actionHistory = [];
 let lastBigButtonPressTime = 0;
 let activeModalPhotoIndex = null;
 
@@ -957,7 +956,6 @@ function importSessionJSON(event) {
           if (!heatsData[hId].attachedPhotos) heatsData[hId].attachedPhotos = [];
         }
 
-        actionHistory = [];
         document.getElementById('input-lanes').value = activeLanes;
         document.getElementById('input-tournament-name').value = tournamentName;
         document.getElementById('input-session-type').value = sessionType;
@@ -1044,8 +1042,7 @@ function deleteCurrentHeat() {
     delete heatsData[currentHeatId];
     const remainingKeys = Object.keys(heatsData);
     currentHeatId = parseInt(remainingKeys[0]);
-    actionHistory = [];
-    renderHeatSelectOptions();
+       renderHeatSelectOptions();
     document.getElementById('heat-select').value = currentHeatId;
     loadHeatState(currentHeatId);
     autoSaveToStorage();
@@ -2183,8 +2180,7 @@ function resetClock() {
   document.getElementById('cards-pool').innerHTML = "";
   h.cards = [];
   h.attachedPhotos = [];
-  actionHistory = [];
-  h.laneData.forEach((l) => {
+   h.laneData.forEach((l) => {
     l.splits = Array(h.activeSplits).fill(null);
     l.officialTime = "";
   });
