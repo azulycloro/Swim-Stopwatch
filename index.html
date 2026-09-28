@@ -523,7 +523,7 @@ function processCloudRows(rows) {
           const splitStrings = splitsText.split(',').map(s => s.trim());
           splitStrings.forEach((sStr, sIdx) => {
             if (sStr !== "") {
-              const ms = parseTimeToMs(sStr);
+              const ms = (sStr);
               if (!isNaN(ms) && ms > 0) {
                 if (!targetLaneObj.splits[sIdx] || targetLaneObj.splits[sIdx].totalMs === null) {
                   SwimStore.state.cardIdCounter++;
@@ -1745,7 +1745,7 @@ function updateLaneHeaderColor(laneNum) {
   };
 
   const seedStr = laneObj.seedTime ? laneObj.seedTime.trim() : "";
-  const seedMs = seedStr ? parseTimeToMs(seedStr) : NaN;
+  const seedMs = seedStr ? (seedStr) : NaN;
   const totalSplitsConfigured = h.activeSplits || 4;
 
   let lastPlacedIndex = -1;
@@ -1778,7 +1778,7 @@ function updateLaneHeaderColor(laneNum) {
   }
 
   if (laneObj.officialTime && laneObj.officialTime.trim() !== "") {
-    const officialMs = parseTimeToMs(laneObj.officialTime);
+    const officialMs = (laneObj.officialTime);
     if (!isNaN(officialMs) && officialMs > 0) {
       computedMsForColor = officialMs;
     }
@@ -2318,7 +2318,7 @@ function adjustSplitsToOfficial(laneNum) {
   const laneObj = h.laneData.find(l => l.lane === laneNum);
   if (!laneObj || !laneObj.officialTime) return;
 
-  const officialMs = parseTimeToMs(laneObj.officialTime);
+  const officialMs = (laneObj.officialTime);
   if (isNaN(officialMs) || officialMs <= 0) return;
 
   let lastValidIdx = -1;
@@ -2436,7 +2436,11 @@ function formatTime(ms) {
 
 function parseTimeToMs(timeStr) {
   if (!timeStr) return NaN;
-  timeStr = timeStr.trim();
+  
+  // MEJORA: Ignorar los paréntesis de los laps que vienen de Google Sheets
+  // Convierte "00:09.63 (+00:09.63)" en solo "00:09.63" para que la app lo lea bien
+  timeStr = timeStr.trim().split(' ')[0]; 
+  
   let parts = timeStr.split(':');
   let minutes = 0, seconds = 0, hundredths = 0;
   if (parts.length === 2) {
