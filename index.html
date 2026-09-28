@@ -1763,10 +1763,16 @@ let touchStartX = 0;
 let touchStartY = 0;
 
 function addTouchEvents(el) {
+  // Seguro: Si ya tiene los eventos, abortamos para no duplicarlos
+  if (el.dataset.touchBound === "true") return; 
+  
   el.addEventListener('touchstart', handleTouchStart, { passive: true });
   el.addEventListener('touchmove', handleTouchMove, { passive: false });
   el.addEventListener('touchend', handleTouchEnd, { passive: true });
   el.addEventListener('touchcancel', handleTouchCancel, { passive: true });
+  
+  // Marcamos el elemento como configurado
+  el.dataset.touchBound = "true";
 }
 
 function handleTouchStart(e) {
