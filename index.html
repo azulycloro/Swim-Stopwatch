@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Swim Stopwatch - Entrenadores Pro v3.6.1 (Offline-First)</title>
+<title>Swim Stopwatch - Entrenadores Pro v4.0 (PWA)</title>
+<!-- Enlace al Manifest para instalación PWA -->
+<link rel="manifest" href="manifest.json">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 body { display: flex; height: 100vh; background-color: #f0f4f8; overflow: hidden; touch-action: manipulation; }
@@ -174,9 +176,9 @@ body { display: flex; height: 100vh; background-color: #f0f4f8; overflow: hidden
   max-height: 90vh; 
   padding: 15px; 
   background: #000; 
-  overflow: hidden; /* Evita que la foto se desborde al hacer zoom */
+  overflow: hidden; 
   position: relative;
-  touch-action: none; /* Bloquea el scroll nativo del navegador al tocar la foto */
+  touch-action: none; 
 }
 #full-image-preview { 
   max-width: 100%; 
@@ -220,7 +222,6 @@ body { display: flex; height: 100vh; background-color: #f0f4f8; overflow: hidden
       <div id="content-scroll-area">
         <main id="lanes-container"></main>
         
-        <!-- Zona de gestión de fotos integrada -->
         <div id="photo-bottom-zone">
           <button class="header-btn photo-btn" id="btn-add-photo" onclick="triggerCameraInput()">📷 Tomar Foto (0/4)</button>
           <input type="file" id="camera-file-input" accept="image/*" capture="environment" style="display: none;" onchange="handlePhotoSelect(event)">
@@ -234,7 +235,6 @@ body { display: flex; height: 100vh; background-color: #f0f4f8; overflow: hidden
     </div>
   </div>
 
-  <!-- Panel Inferior de Estado / Metadatos -->
   <footer id="app-footer-info">
     <div class="footer-meta-item">
       <span>Entrenador:</span>
@@ -246,7 +246,7 @@ body { display: flex; height: 100vh; background-color: #f0f4f8; overflow: hidden
     </div>
     <div class="footer-meta-item">
       <span>App:</span>
-      <strong>v3.6.1 (IndexedDB)</strong>
+      <strong>v4.0 (PWA)</strong>
     </div>
     <div id="save-status-indicator">✓ Sincronización Offline-First activa</div>
   </footer>
@@ -277,15 +277,14 @@ body { display: flex; height: 100vh; background-color: #f0f4f8; overflow: hidden
   </div>
 </div>
 
-<!-- Modal Ventana Gestion -->
 <div class="modal" id="file-options-modal">
   <div class="modal-content" style="width: 380px;">
     <h3>Gestión</h3>
     <div class="file-options-grid">
       <button class="file-option-btn" onclick="closeFileModal(); openTournamentManagerModal();" style="color: #c2185b; border-color: #f8bbd0;">🏆 Nuevo Torneo / Sesión</button>
       <button class="file-option-btn" onclick="closeFileModal(); openRosterModal();" style="color: #0288d1; border-color: #b3e5fc;">📥 Cargar Series</button>
-      <button class="file-option-btn" onclick="closeFileModal(); exportSessionJSON();" style="color: #6a1b9a; border-color: #e1bee7;">💾 Guardar Sesión</button>
-      <button class="file-option-btn" onclick="closeFileModal(); triggerImportSession();" style="color: #2e7d32; border-color: #c8e6c9;">📂 Cargar Sesión</button>
+      <button class="file-option-btn" onclick="closeFileModal(); exportSessionJSON();" style="color: #6a1b9a; border-color: #e1bee7;">💾 Guardar Sesión local</button>
+      <button class="file-option-btn" onclick="closeFileModal(); triggerImportSession();" style="color: #2e7d32; border-color: #c8e6c9;">📂 Cargar Sesión local</button>
       <button class="file-option-btn" onclick="closeFileModal(); syncToGoogleSheet();" style="color: #e65100; border-color: #ffe0b2;">☁️ Sincronizar con Google Sheets</button>
       <button class="file-option-btn" onclick="closeFileModal(); openSettings();" style="color: #37474f; border-color: #cfd8dc;">⚙️ Ajustes</button>
       <button class="file-option-btn" onclick="closeFileModal(); clearLocalStorage();" style="color: #d32f2f; border-color: #ef9a9a;">🗑️ Limpiar Datos</button>
@@ -296,7 +295,6 @@ body { display: flex; height: 100vh; background-color: #f0f4f8; overflow: hidden
   </div>
 </div>
 
-<!-- Modal Gestor de Torneos y Sesiones -->
 <div class="modal" id="tournament-manager-modal">
   <div class="modal-content">
     <h3>Administrador de Torneos y Sesiones</h3>
@@ -341,7 +339,6 @@ body { display: flex; height: 100vh; background-color: #f0f4f8; overflow: hidden
   </div>
 </div>
 
-<!-- Ventana de Ajustes -->
 <div class="modal" id="settings-modal">
   <div class="modal-content">
     <h3>Ajustes</h3>
@@ -400,6 +397,24 @@ body { display: flex; height: 100vh; background-color: #f0f4f8; overflow: hidden
 </div>
 
 <script>
+/* ==========================================================================
+   STATE MANAGEMENT (SwimStore) - Arquitectura Centralizada
+   ========================================================================== */
+const SwimStore = {
+  state: {
+    heatsData: {},
+    currentHeatId: 1,
+    totalHeatsCount: 1,
+    activeLanes: 6,
+    tournamentName: "Copa_Nal_Interclubes",
+    sessionType: "Eliminatorias",
+    coachName: "Juan Albarracin",
+    googleWebAppUrl: "",
+    cardIdCounter: 0,
+    activeModalPhotoIndex: null
+  }
+};
+
 const workerCode = `
 let timer = null;
 self.onmessage = function(e) {
@@ -409,233 +424,18 @@ self.onmessage = function(e) {
     if (timer) { clearInterval(timer); timer = null; }
   }
 };`;
-  /* ==========================================================================
-   GESTIÓN DE FOTOGRAFÍAS DE TABLERO / OFICIALES (MÁXIMO 4 POR PRUEBA)
-   ========================================================================== */
 
-function triggerCameraInput() {
-  const h = heatsData[currentHeatId];
-  if (!h) return;
-  if (!h.attachedPhotos) h.attachedPhotos = [];
-  
-  if (h.attachedPhotos.length >= 4) {
-    alert("Se ha alcanzado el límite máximo de 4 fotografías para esta prueba.");
-    return;
-  }
-  document.getElementById('camera-file-input').click();
-}
-
-function handlePhotoSelect(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  const h = heatsData[currentHeatId];
-  if (!h) return;
-  if (!h.attachedPhotos) h.attachedPhotos = [];
-
-  if (h.attachedPhotos.length >= 4) {
-    alert("Se ha alcanzado el límite máximo de 4 fotografías para esta prueba.");
-    event.target.value = "";
-    return;
-  }
-
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const photoId = 'photo_' + Date.now();
-    const photoDataUrl = e.target.result;
-    
-    // 1. Guardar solo el "ticket" ligero en heatsData
-    const photoMeta = {
-      id: photoId,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-      name: file.name || `Foto_${h.attachedPhotos.length + 1}`
-    };
-    h.attachedPhotos.push(photoMeta);
-    
-    // 2. Enviar los megabytes a la bóveda (IndexedDB)
-    savePhotoToIDB({ id: photoId, dataUrl: photoDataUrl }).then(() => {
-      renderPhotoPanel();
-      autoSaveToStorage();
-    });
-  };
-  reader.readAsDataURL(file);
-  event.target.value = "";
-}
-
-async function renderPhotoPanel() {
-  const h = heatsData[currentHeatId];
-  const panel = document.getElementById('photo-footer-panel');
-  const btnAdd = document.getElementById('btn-add-photo');
-  if (!h || !panel) return;
-
-  if (!h.attachedPhotos) h.attachedPhotos = [];
-
-  if (btnAdd) {
-    btnAdd.innerText = `📷 Tomar Foto (${h.attachedPhotos.length}/4)`;
-    btnAdd.style.opacity = h.attachedPhotos.length >= 4 ? "0.6" : "1";
-  }
-
-  if (h.attachedPhotos.length === 0) {
-    panel.style.display = 'none';
-    panel.innerHTML = '';
-    return;
-  }
-
-  panel.style.display = 'flex';
-  panel.innerHTML = '';
-
-  for (let idx = 0; idx < h.attachedPhotos.length; idx++) {
-    const photoMeta = h.attachedPhotos[idx];
-    const item = document.createElement('div');
-    item.className = 'footer-photo-item';
-
-    const img = document.createElement('img');
-    img.className = 'footer-photo-thumb';
-    // Cargador visual mientras se busca la imagen en la bóveda
-    img.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='50' height='50'><rect width='50' height='50' fill='#fdf2f2'/></svg>"; 
-    
-    // Retrocompatibilidad + Búsqueda en Bóveda
-    if (photoMeta.dataUrl) {
-      img.src = photoMeta.dataUrl; // Foto antigua
-    } else {
-      getPhotoFromIDB(photoMeta.id).then(photoData => {
-        if (photoData && photoData.dataUrl) img.src = photoData.dataUrl;
-      });
-    }
-
-    img.onclick = () => viewPhoto(idx);
-
-    const details = document.createElement('div');
-    details.className = 'footer-photo-details';
-
-    const title = document.createElement('div');
-    title.className = 'footer-photo-title';
-    title.innerText = `Foto ${idx + 1} de 4 (${photoMeta.timestamp})`;
-
-    const filename = document.createElement('div');
-    filename.className = 'footer-photo-filename';
-    filename.innerText = photoMeta.name || `Foto_${idx + 1}`;
-
-    details.appendChild(title);
-    details.appendChild(filename);
-
-    const actions = document.createElement('div');
-    actions.className = 'footer-photo-actions';
-
-    const btnView = document.createElement('button');
-    btnView.className = 'header-btn';
-    btnView.style.cssText = 'padding: 4px 8px; font-size: 11px;';
-    btnView.innerText = '👁️';
-    btnView.title = 'Ver fotografía';
-    btnView.onclick = () => viewPhoto(idx);
-
-    const btnDel = document.createElement('button');
-    btnDel.className = 'header-btn';
-    btnDel.style.cssText = 'padding: 4px 8px; font-size: 11px; color: #d32f2f; border-color: #ef9a9a;';
-    btnDel.innerText = '🗑️';
-    btnDel.title = 'Eliminar fotografía';
-    btnDel.onclick = () => deletePhoto(idx);
-
-    actions.appendChild(btnView);
-    actions.appendChild(btnDel);
-
-    item.appendChild(img);
-    item.appendChild(details);
-    item.appendChild(actions);
-
-    panel.appendChild(item);
-  }
-}
-
-// Variables globales para el Zoom
-let imgScale = 1, imgPointX = 0, imgPointY = 0;
-let imgPanning = false, imgStart = { x: 0, y: 0 }, imgInitialPinchDist = 0;
-
-async function viewPhoto(index) {
-  const h = heatsData[currentHeatId];
-  if (!h || !h.attachedPhotos || !h.attachedPhotos[index]) return;
-  activeModalPhotoIndex = index;
-  
-  const photoMeta = h.attachedPhotos[index];
-  let finalDataUrl = photoMeta.dataUrl; // Por si es foto vieja
-  
-  if (!finalDataUrl) {
-    const photoData = await getPhotoFromIDB(photoMeta.id);
-    if (photoData) finalDataUrl = photoData.dataUrl;
-  }
-
-  const modalImg = document.getElementById('full-image-preview');
-  modalImg.src = finalDataUrl || "";
-  
-  imgScale = 1;
-  imgPointX = 0;
-  imgPointY = 0;
-  modalImg.style.transform = `translate(0px, 0px) scale(1)`;
-  
-  document.getElementById('image-modal').classList.add('open');
-}
-
-function closePhotoModal() {
-  activeModalPhotoIndex = null;
-  document.getElementById('image-modal').classList.remove('open');
-}
-
-async function downloadPhotoModalActive() {
-  const h = heatsData[currentHeatId];
-  if (activeModalPhotoIndex === null || !h || !h.attachedPhotos[activeModalPhotoIndex]) return;
-  
-  const photoMeta = h.attachedPhotos[activeModalPhotoIndex];
-  let finalDataUrl = photoMeta.dataUrl;
-  
-  if (!finalDataUrl) {
-    const photoData = await getPhotoFromIDB(photoMeta.id);
-    if (photoData) finalDataUrl = photoData.dataUrl;
-  }
-
-  if (!finalDataUrl) return;
-
-  const a = document.createElement('a');
-  a.href = finalDataUrl;
-  a.download = `${getFormattedTournamentLabel()}_${h.name.replace(/\s+/g, '_')}_Foto_${activeModalPhotoIndex + 1}.png`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-}
-
-function deletePhoto(index) {
-  const h = heatsData[currentHeatId];
-  if (!h || !h.attachedPhotos || !h.attachedPhotos[index]) return;
-  
-  if (confirm(`¿Eliminar la Foto ${index + 1}?`)) {
-    const photoId = h.attachedPhotos[index].id;
-    // Eliminamos de la bóveda de datos pesados
-    deletePhotoFromIDB(photoId).then(() => {
-      // Y luego borramos el "ticket" ligero
-      h.attachedPhotos.splice(index, 1);
-      renderPhotoPanel();
-      autoSaveToStorage();
-    });
-  }
-}
 const blobWorker = new Blob([workerCode], { type: 'application/javascript' });
 const timerWorker = new Worker(URL.createObjectURL(blobWorker));
 
-let heatsData = {};
-let currentHeatId = 1;
-let totalHeatsCount = 1;
-let activeLanes = 6;
-let tournamentName = "Copa_Nal_Interclubes";
-let sessionType = "Eliminatorias";
-let coachName = "Juan Albarracin";
-let googleWebAppUrl = "";
-let cardIdCounter = 0;
 let selectedSource = null;
 let lastBigButtonPressTime = 0;
-let activeModalPhotoIndex = null;
 
-/* IndexedDB & Outbox Pattern Architecture[cite: 1] */
+/* ==========================================================================
+   INDEXED DB (Patrón Outbox y Almacenamiento de Fotos v2)
+   ========================================================================== */
 const DB_NAME = 'SwimStopwatchDB';
-const DB_VERSION = 2; // ¡CRÍTICO! Cambiar a versión 2
+const DB_VERSION = 2; // ¡CRÍTICO! Versión 2 para soportar la bóveda de fotos
 let db = null;
 
 function initIndexedDB() {
@@ -732,9 +532,9 @@ function deletePhotoFromIDB(photoId) {
     request.onerror = (e) => reject(e.target.error);
   });
 }
-  
+
 function processOutbox() {
-  if (!db || !navigator.onLine || !googleWebAppUrl) return;
+  if (!db || !navigator.onLine || !SwimStore.state.googleWebAppUrl) return;
   const transaction = db.transaction(['outbox'], 'readwrite');
   const store = transaction.objectStore('outbox');
   const request = store.getAll();
@@ -743,10 +543,10 @@ function processOutbox() {
     if (!items || items.length === 0) return;
 
     const item = items[0];
-fetch(googleWebAppUrl, {
+    fetch(SwimStore.state.googleWebAppUrl, {
       method: 'POST',
       mode: 'no-cors',
-      headers: { 'Content-Type': 'text/plain' }, // ¡Este es el cambio vital!
+      headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify(item.payload)
     }).then(() => {
       const delTx = db.transaction(['outbox'], 'readwrite');
@@ -774,12 +574,16 @@ window.addEventListener('offline', () => {
   if (ind) ind.innerText = "💾 Modo Offline (Guardando seguro en IndexedDB)";
 });
 
+/* ==========================================================================
+   INICIALIZACIÓN Y CONFIGURACIÓN GLOBAL
+   ========================================================================== */
+
 function getFormattedTournamentLabel() {
   const now = new Date();
   const dd = String(now.getDate()).padStart(2, '0');
   const mm = String(now.getMonth() + 1).padStart(2, '0');
   const yy = String(now.getFullYear()).slice(-2);
-  return `${tournamentName}_${sessionType}_${dd}${mm}${yy}`;
+  return `${SwimStore.state.tournamentName}_${SwimStore.state.sessionType}_${dd}${mm}${yy}`;
 }
 
 async function initApp() {
@@ -804,46 +608,46 @@ async function initApp() {
     if (document.hidden) { autoSaveToStorage(); }
   });
   setInterval(() => {
-    const h = heatsData[currentHeatId];
+    const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
     if (h && h.isRunning) { autoSaveToStorage(); }
   }, 15000);
 
   const savedState = await loadStateFromIDB();
   if (savedState) {
     try {
-      heatsData = savedState.heatsData || {};
-      currentHeatId = savedState.currentHeatId || 1;
-      totalHeatsCount = savedState.totalHeatsCount || 1;
-      activeLanes = savedState.activeLanes || 6;
-      tournamentName = savedState.tournamentName || "Copa_Nal_Interclubes";
-      sessionType = savedState.sessionType || "Eliminatorias";
-      coachName = savedState.coachName || "Juan Albarracin";
-      googleWebAppUrl = savedState.googleWebAppUrl || "";
-      cardIdCounter = savedState.cardIdCounter || 0;
+      SwimStore.state.heatsData = savedState.heatsData || {};
+      SwimStore.state.currentHeatId = savedState.currentHeatId || 1;
+      SwimStore.state.totalHeatsCount = savedState.totalHeatsCount || 1;
+      SwimStore.state.activeLanes = savedState.activeLanes || 6;
+      SwimStore.state.tournamentName = savedState.tournamentName || "Copa_Nal_Interclubes";
+      SwimStore.state.sessionType = savedState.sessionType || "Eliminatorias";
+      SwimStore.state.coachName = savedState.coachName || "Juan Albarracin";
+      SwimStore.state.googleWebAppUrl = savedState.googleWebAppUrl || "";
+      SwimStore.state.cardIdCounter = savedState.cardIdCounter || 0;
       
-      for (let hId in heatsData) {
-        if (!heatsData[hId].hiddenLanes) heatsData[hId].hiddenLanes = [];
-        if (!heatsData[hId].attachedPhotos) heatsData[hId].attachedPhotos = [];
+      for (let hId in SwimStore.state.heatsData) {
+        if (!SwimStore.state.heatsData[hId].hiddenLanes) SwimStore.state.heatsData[hId].hiddenLanes = [];
+        if (!SwimStore.state.heatsData[hId].attachedPhotos) SwimStore.state.heatsData[hId].attachedPhotos = [];
       }
 
-      if (Object.keys(heatsData).length === 0) {
-        heatsData[1] = createEmptyHeatState("Prueba 1", 2);
-        currentHeatId = 1;
+      if (Object.keys(SwimStore.state.heatsData).length === 0) {
+        SwimStore.state.heatsData[1] = createEmptyHeatState("Prueba 1", 2);
+        SwimStore.state.currentHeatId = 1;
       }
 
-      document.getElementById('input-lanes').value = activeLanes;
-      document.getElementById('input-tournament-name').value = tournamentName;
-      document.getElementById('input-session-type').value = sessionType;
-      document.getElementById('input-coach').value = coachName;
-      document.getElementById('input-webapp-url').value = googleWebAppUrl;
+      document.getElementById('input-lanes').value = SwimStore.state.activeLanes;
+      document.getElementById('input-tournament-name').value = SwimStore.state.tournamentName;
+      document.getElementById('input-session-type').value = SwimStore.state.sessionType;
+      document.getElementById('input-coach').value = SwimStore.state.coachName;
+      document.getElementById('input-webapp-url').value = SwimStore.state.googleWebAppUrl;
       
       updateMetaDisplays();
       renderHeatSelectOptions();
-      if (!heatsData[currentHeatId]) {
-        currentHeatId = parseInt(Object.keys(heatsData)[0]);
+      if (!SwimStore.state.heatsData[SwimStore.state.currentHeatId]) {
+        SwimStore.state.currentHeatId = parseInt(Object.keys(SwimStore.state.heatsData)[0]);
       }
-      document.getElementById('heat-select').value = currentHeatId;
-      loadHeatState(currentHeatId);
+      document.getElementById('heat-select').value = SwimStore.state.currentHeatId;
+      loadHeatState(SwimStore.state.currentHeatId);
       processOutbox();
       return;
     } catch(e) {
@@ -852,19 +656,19 @@ async function initApp() {
   }
 
   updateMetaDisplays();
-  document.getElementById('input-tournament-name').value = tournamentName;
-  document.getElementById('input-session-type').value = sessionType;
-  document.getElementById('input-coach').value = coachName;
-  heatsData[1] = createEmptyHeatState("Prueba 1", 2);
+  document.getElementById('input-tournament-name').value = SwimStore.state.tournamentName;
+  document.getElementById('input-session-type').value = SwimStore.state.sessionType;
+  document.getElementById('input-coach').value = SwimStore.state.coachName;
+  SwimStore.state.heatsData[1] = createEmptyHeatState("Prueba 1", 2);
   renderHeatSelectOptions();
   loadHeatState(1);
 }
 
 function openSettings() {
-  const h = heatsData[currentHeatId];
-  document.getElementById('input-coach').value = coachName;
-  document.getElementById('input-webapp-url').value = googleWebAppUrl;
-  document.getElementById('input-lanes').value = activeLanes;
+  const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
+  document.getElementById('input-coach').value = SwimStore.state.coachName;
+  document.getElementById('input-webapp-url').value = SwimStore.state.googleWebAppUrl;
+  document.getElementById('input-lanes').value = SwimStore.state.activeLanes;
   if (h) {
     document.getElementById('input-splits').value = h.activeSplits || 4;
   }
@@ -876,17 +680,17 @@ function closeSettings() {
 }
 
 function saveSettings() {
-  coachName = document.getElementById('input-coach').value.trim() || "Entrenador";
-  googleWebAppUrl = document.getElementById('input-webapp-url').value.trim();
+  SwimStore.state.coachName = document.getElementById('input-coach').value.trim() || "Entrenador";
+  SwimStore.state.googleWebAppUrl = document.getElementById('input-webapp-url').value.trim();
   
   const newActiveLanes = parseInt(document.getElementById('input-lanes').value, 10);
   const newSplits = parseInt(document.getElementById('input-splits').value, 10);
 
   if (!isNaN(newActiveLanes) && newActiveLanes > 0) {
-    activeLanes = newActiveLanes;
+    SwimStore.state.activeLanes = newActiveLanes;
   }
 
-  const h = heatsData[currentHeatId];
+  const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
   if (h && !isNaN(newSplits) && newSplits > 0) {
     h.activeSplits = newSplits;
     h.laneData.forEach(l => {
@@ -895,9 +699,9 @@ function saveSettings() {
     });
   }
 
-  for (let hId in heatsData) {
-    let heat = heatsData[hId];
-    while (heat.laneData.length < activeLanes) {
+  for (let hId in SwimStore.state.heatsData) {
+    let heat = SwimStore.state.heatsData[hId];
+    while (heat.laneData.length < SwimStore.state.activeLanes) {
       let nextIdx = heat.laneData.length;
       heat.laneData.push({
         lane: nextIdx,
@@ -919,7 +723,7 @@ function saveSettings() {
 function updateMetaDisplays() {
   const label = getFormattedTournamentLabel();
   document.getElementById('tournament-meta-display').innerText = label;
-  document.getElementById('coach-name-display').innerText = coachName;
+  document.getElementById('coach-name-display').innerText = SwimStore.state.coachName;
 }
 
 function toggleFullScreen() {
@@ -946,8 +750,8 @@ function closeTournamentManagerModal() { document.getElementById('tournament-man
 function applyTournamentSettings() {
   const tName = document.getElementById('input-tournament-name').value.trim();
   const sType = document.getElementById('input-session-type').value;
-  if (tName) tournamentName = tName;
-  sessionType = sType;
+  if (tName) SwimStore.state.tournamentName = tName;
+  SwimStore.state.sessionType = sType;
   updateMetaDisplays();
   closeTournamentManagerModal();
   autoSaveToStorage();
@@ -961,7 +765,7 @@ function closeOffsetModal() {
 }
 
 function applyTimeOffset(offsetMs) {
-  const h = heatsData[currentHeatId];
+  const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
   if (!h) return;
   if (h.isRunning) {
     h.startTime -= offsetMs;
@@ -986,14 +790,14 @@ function applyManualOffset() {
 function exportSessionJSON() {
   saveCurrentHeatState();
   const stateToExport = {
-    tournamentName: tournamentName,
-    sessionType: sessionType,
-    coachName: coachName,
-    heatsData: heatsData,
-    currentHeatId: currentHeatId,
-    totalHeatsCount: totalHeatsCount,
-    activeLanes: activeLanes,
-    cardIdCounter: cardIdCounter,
+    tournamentName: SwimStore.state.tournamentName,
+    sessionType: SwimStore.state.sessionType,
+    coachName: SwimStore.state.coachName,
+    heatsData: SwimStore.state.heatsData,
+    currentHeatId: SwimStore.state.currentHeatId,
+    totalHeatsCount: SwimStore.state.totalHeatsCount,
+    activeLanes: SwimStore.state.activeLanes,
+    cardIdCounter: SwimStore.state.cardIdCounter,
     exportedAt: new Date().toISOString()
   };
   const jsonStr = JSON.stringify(stateToExport, null, 2);
@@ -1021,28 +825,28 @@ function importSessionJSON(event) {
         return;
       }
       if (confirm("¿Deseas reemplazar la sesión actual con los datos cargados de este archivo?")) {
-        heatsData = parsed.heatsData;
-        currentHeatId = parsed.currentHeatId;
-        totalHeatsCount = parsed.totalHeatsCount || Object.keys(heatsData).length;
-        activeLanes = parsed.activeLanes || 6;
-        tournamentName = parsed.tournamentName || "Copa_Nal_Interclubes";
-        sessionType = parsed.sessionType || "Eliminatorias";
-        coachName = parsed.coachName || "Juan Albarracin";
-        cardIdCounter = parsed.cardIdCounter || 0;
+        SwimStore.state.heatsData = parsed.heatsData;
+        SwimStore.state.currentHeatId = parsed.currentHeatId;
+        SwimStore.state.totalHeatsCount = parsed.totalHeatsCount || Object.keys(SwimStore.state.heatsData).length;
+        SwimStore.state.activeLanes = parsed.activeLanes || 6;
+        SwimStore.state.tournamentName = parsed.tournamentName || "Copa_Nal_Interclubes";
+        SwimStore.state.sessionType = parsed.sessionType || "Eliminatorias";
+        SwimStore.state.coachName = parsed.coachName || "Juan Albarracin";
+        SwimStore.state.cardIdCounter = parsed.cardIdCounter || 0;
         
-        for (let hId in heatsData) {
-          if (!heatsData[hId].hiddenLanes) heatsData[hId].hiddenLanes = [];
-          if (!heatsData[hId].attachedPhotos) heatsData[hId].attachedPhotos = [];
+        for (let hId in SwimStore.state.heatsData) {
+          if (!SwimStore.state.heatsData[hId].hiddenLanes) SwimStore.state.heatsData[hId].hiddenLanes = [];
+          if (!SwimStore.state.heatsData[hId].attachedPhotos) SwimStore.state.heatsData[hId].attachedPhotos = [];
         }
 
-        document.getElementById('input-lanes').value = activeLanes;
-        document.getElementById('input-tournament-name').value = tournamentName;
-        document.getElementById('input-session-type').value = sessionType;
-        document.getElementById('input-coach').value = coachName;
+        document.getElementById('input-lanes').value = SwimStore.state.activeLanes;
+        document.getElementById('input-tournament-name').value = SwimStore.state.tournamentName;
+        document.getElementById('input-session-type').value = SwimStore.state.sessionType;
+        document.getElementById('input-coach').value = SwimStore.state.coachName;
         updateMetaDisplays();
         renderHeatSelectOptions();
-        document.getElementById('heat-select').value = currentHeatId;
-        loadHeatState(currentHeatId);
+        document.getElementById('heat-select').value = SwimStore.state.currentHeatId;
+        loadHeatState(SwimStore.state.currentHeatId);
         autoSaveToStorage();
         alert("¡Sesión cargada con éxito!");
       }
@@ -1056,7 +860,7 @@ function importSessionJSON(event) {
 }
 
 function syncToGoogleSheet() {
-  if (!googleWebAppUrl) {
+  if (!SwimStore.state.googleWebAppUrl) {
     alert("Por favor configura primero la URL del Web App de Google Apps Script en Ajustes (⚙️).");
     openSettings();
     return;
@@ -1065,19 +869,19 @@ function syncToGoogleSheet() {
   
   // 1. Crear una copia limpia y ligera de los datos, excluyendo las fotografías
   const cleanHeatsData = {};
-  for (let hId in heatsData) {
+  for (let hId in SwimStore.state.heatsData) {
     cleanHeatsData[hId] = {
-      name: heatsData[hId].name,
-      laneData: heatsData[hId].laneData
+      name: SwimStore.state.heatsData[hId].name,
+      laneData: SwimStore.state.heatsData[hId].laneData
       // Omitimos intencionalmente 'attachedPhotos' para evitar saturar la red
     };
   }
 
   // 2. Empaquetar solo el texto
   const payload = {
-    tournamentName: tournamentName,
-    sessionType: sessionType,
-    coachName: coachName,
+    tournamentName: SwimStore.state.tournamentName,
+    sessionType: SwimStore.state.sessionType,
+    coachName: SwimStore.state.coachName,
     heats: cleanHeatsData
   };
 
@@ -1093,6 +897,7 @@ function syncToGoogleSheet() {
     ind.innerText = "⚠️ Error de sincronización";
   });
 }
+
 function setupHeatSelectDeleteEvents() {
   const selectEl = document.getElementById('heat-select');
   let pressTimer = null;
@@ -1110,20 +915,20 @@ function setupHeatSelectDeleteEvents() {
 }
 
 function deleteCurrentHeat() {
-  const keys = Object.keys(heatsData);
+  const keys = Object.keys(SwimStore.state.heatsData);
   if (keys.length <= 1) {
     alert("No puedes eliminar la única prueba existente.");
     return;
   }
-  const h = heatsData[currentHeatId];
+  const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
   if (!h) return;
   if (confirm(`¿Estás seguro de eliminar la prueba "${h.name}"?`)) {
-    delete heatsData[currentHeatId];
-    const remainingKeys = Object.keys(heatsData);
-    currentHeatId = parseInt(remainingKeys[0]);
-       renderHeatSelectOptions();
-    document.getElementById('heat-select').value = currentHeatId;
-    loadHeatState(currentHeatId);
+    delete SwimStore.state.heatsData[SwimStore.state.currentHeatId];
+    const remainingKeys = Object.keys(SwimStore.state.heatsData);
+    SwimStore.state.currentHeatId = parseInt(remainingKeys[0]);
+    renderHeatSelectOptions();
+    document.getElementById('heat-select').value = SwimStore.state.currentHeatId;
+    loadHeatState(SwimStore.state.currentHeatId);
     autoSaveToStorage();
   }
 }
@@ -1131,15 +936,15 @@ function deleteCurrentHeat() {
 function autoSaveToStorage() {
   saveCurrentHeatState();
   const stateToSave = {
-    tournamentName: tournamentName,
-    sessionType: sessionType,
-    coachName: coachName,
-    googleWebAppUrl: googleWebAppUrl,
-    heatsData: heatsData,
-    currentHeatId: currentHeatId,
-    totalHeatsCount: totalHeatsCount,
-    activeLanes: activeLanes,
-    cardIdCounter: cardIdCounter
+    tournamentName: SwimStore.state.tournamentName,
+    sessionType: SwimStore.state.sessionType,
+    coachName: SwimStore.state.coachName,
+    googleWebAppUrl: SwimStore.state.googleWebAppUrl,
+    heatsData: SwimStore.state.heatsData,
+    currentHeatId: SwimStore.state.currentHeatId,
+    totalHeatsCount: SwimStore.state.totalHeatsCount,
+    activeLanes: SwimStore.state.activeLanes,
+    cardIdCounter: SwimStore.state.cardIdCounter
   };
   
   saveStateToIDB(stateToSave).then(() => {
@@ -1153,8 +958,6 @@ function autoSaveToStorage() {
   });
 }
 
-/* FUNCIÓN CORREGIDA PARA LIMPIAR DATOS SIN PANTALLA EN BLANCO */
-/* FUNCIÓN CORREGIDA PARA LIMPIAR DATOS COMPLETAMENTE */
 function clearLocalStorage() {
   if (confirm("¿Estás seguro de borrar todos los datos acumulados, INCLUYENDO FOTOGRAFÍAS, en esta base de datos local?")) {
     if (db) {
@@ -1164,9 +967,9 @@ function clearLocalStorage() {
         transaction.objectStore('outbox').clear();
         transaction.objectStore('photos').clear(); // Vaciamos la bóveda
         transaction.oncomplete = () => {
-          heatsData = { 1: createEmptyHeatState("Prueba 1", 2) };
-          currentHeatId = 1;
-          totalHeatsCount = 1;
+          SwimStore.state.heatsData = { 1: createEmptyHeatState("Prueba 1", 2) };
+          SwimStore.state.currentHeatId = 1;
+          SwimStore.state.totalHeatsCount = 1;
           location.reload();
         };
         transaction.onerror = (e) => {
@@ -1195,7 +998,7 @@ function calculateSplitsForDistance(distance) {
 
 function createEmptyHeatState(defaultName, initialSplits = 4) {
   let initialLanes = [];
-  for (let i = 0; i < activeLanes; i++) {
+  for (let i = 0; i < SwimStore.state.activeLanes; i++) {
     initialLanes.push({
       lane: i,
       swimmerName: "",
@@ -1220,76 +1023,76 @@ function createEmptyHeatState(defaultName, initialSplits = 4) {
 
 function addHeat() {
   saveCurrentHeatState();
-  totalHeatsCount++;
-  currentHeatId = totalHeatsCount;
-  const lastHeatSplits = heatsData[currentHeatId - 1] ? heatsData[currentHeatId - 1].activeSplits : 4;
-  heatsData[currentHeatId] = createEmptyHeatState(`Prueba ${totalHeatsCount}`, lastHeatSplits);
+  SwimStore.state.totalHeatsCount++;
+  SwimStore.state.currentHeatId = SwimStore.state.totalHeatsCount;
+  const lastHeatSplits = SwimStore.state.heatsData[SwimStore.state.currentHeatId - 1] ? SwimStore.state.heatsData[SwimStore.state.currentHeatId - 1].activeSplits : 4;
+  SwimStore.state.heatsData[SwimStore.state.currentHeatId] = createEmptyHeatState(`Prueba ${SwimStore.state.totalHeatsCount}`, lastHeatSplits);
   renderHeatSelectOptions();
-  document.getElementById('heat-select').value = currentHeatId;
-  loadHeatState(currentHeatId);
+  document.getElementById('heat-select').value = SwimStore.state.currentHeatId;
+  loadHeatState(SwimStore.state.currentHeatId);
   autoSaveToStorage();
 }
 
 function renameCurrentHeat() {
-  const h = heatsData[currentHeatId];
+  const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
   if (!h) return;
   const newName = prompt("Ingresa el nuevo nombre para esta serie/prueba:", h.name);
   if (newName && newName.trim() !== "") {
     h.name = newName.trim();
     renderHeatSelectOptions();
-    document.getElementById('heat-select').value = currentHeatId;
-    loadHeatState(currentHeatId);
+    document.getElementById('heat-select').value = SwimStore.state.currentHeatId;
+    loadHeatState(SwimStore.state.currentHeatId);
     autoSaveToStorage();
   }
 }
 
 function switchHeat(newHeatId) {
   newHeatId = parseInt(newHeatId);
-  if (newHeatId === currentHeatId) return;
+  if (newHeatId === SwimStore.state.currentHeatId) return;
   saveCurrentHeatState();
-  currentHeatId = newHeatId;
-  loadHeatState(currentHeatId);
+  SwimStore.state.currentHeatId = newHeatId;
+  loadHeatState(SwimStore.state.currentHeatId);
   autoSaveToStorage();
 }
 
 function goToPreviousHeat() {
   saveCurrentHeatState();
-  const heatIds = Object.keys(heatsData).map(id => parseInt(id)).sort((a, b) => a - b);
-  let currentIndex = heatIds.indexOf(currentHeatId);
+  const heatIds = Object.keys(SwimStore.state.heatsData).map(id => parseInt(id)).sort((a, b) => a - b);
+  let currentIndex = heatIds.indexOf(SwimStore.state.currentHeatId);
   if (currentIndex > 0) {
-    currentHeatId = heatIds[currentIndex - 1];
+    SwimStore.state.currentHeatId = heatIds[currentIndex - 1];
   } else {
-    currentHeatId = heatIds[heatIds.length - 1];
+    SwimStore.state.currentHeatId = heatIds[heatIds.length - 1];
   }
   renderHeatSelectOptions();
-  document.getElementById('heat-select').value = currentHeatId;
-  loadHeatState(currentHeatId);
+  document.getElementById('heat-select').value = SwimStore.state.currentHeatId;
+  loadHeatState(SwimStore.state.currentHeatId);
   autoSaveToStorage();
 }
 
 function goToNextTargetHeat() {
   saveCurrentHeatState();
   let activeRunningHeatId = null;
-  for (let hId in heatsData) {
-    if (heatsData[hId].isRunning) {
+  for (let hId in SwimStore.state.heatsData) {
+    if (SwimStore.state.heatsData[hId].isRunning) {
       activeRunningHeatId = parseInt(hId);
       break;
     }
   }
   if (activeRunningHeatId !== null) {
-    currentHeatId = activeRunningHeatId;
+    SwimStore.state.currentHeatId = activeRunningHeatId;
     renderHeatSelectOptions();
-    document.getElementById('heat-select').value = currentHeatId;
-    loadHeatState(currentHeatId);
+    document.getElementById('heat-select').value = SwimStore.state.currentHeatId;
+    loadHeatState(SwimStore.state.currentHeatId);
     return;
   }
   let targetHeatId = null;
-  const heatIds = Object.keys(heatsData).map(id => parseInt(id)).sort((a,b)=>a-b);
-  let startIndex = heatIds.indexOf(currentHeatId);
+  const heatIds = Object.keys(SwimStore.state.heatsData).map(id => parseInt(id)).sort((a,b)=>a-b);
+  let startIndex = heatIds.indexOf(SwimStore.state.currentHeatId);
   if (startIndex === -1) startIndex = 0;
   for (let i = startIndex; i < heatIds.length; i++) {
     const hId = heatIds[i];
-    if (!hasHeatTimes(heatsData[hId])) {
+    if (!hasHeatTimes(SwimStore.state.heatsData[hId])) {
       targetHeatId = hId;
       break;
     }
@@ -1297,17 +1100,17 @@ function goToNextTargetHeat() {
   if (targetHeatId === null) {
     for (let i = 0; i < startIndex; i++) {
       const hId = heatIds[i];
-      if (!hasHeatTimes(heatsData[hId])) {
+      if (!hasHeatTimes(SwimStore.state.heatsData[hId])) {
         targetHeatId = hId;
         break;
       }
     }
   }
   if (targetHeatId !== null) {
-    currentHeatId = targetHeatId;
+    SwimStore.state.currentHeatId = targetHeatId;
     renderHeatSelectOptions();
-    document.getElementById('heat-select').value = currentHeatId;
-    loadHeatState(currentHeatId);
+    document.getElementById('heat-select').value = SwimStore.state.currentHeatId;
+    loadHeatState(SwimStore.state.currentHeatId);
   } else {
     alert("Todas las pruebas tienen tiempos registrados o hay un cronómetro activo.");
   }
@@ -1327,16 +1130,16 @@ function hasHeatTimes(heatObj) {
 function renderHeatSelectOptions() {
   const select = document.getElementById('heat-select');
   select.innerHTML = "";
-  for (let id in heatsData) {
+  for (let id in SwimStore.state.heatsData) {
     const opt = document.createElement('option');
     opt.value = id;
-    opt.innerText = heatsData[id].name;
+    opt.innerText = SwimStore.state.heatsData[id].name;
     select.appendChild(opt);
   }
 }
 
 function saveCurrentHeatState() {
-  const h = heatsData[currentHeatId];
+  const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
   if (!h) return;
   h.laneData.forEach(l => {
     const offInput = document.getElementById(`official-input-${l.lane}`);
@@ -1350,7 +1153,7 @@ function saveCurrentHeatState() {
 }
 
 function loadHeatState(heatId) {
-  const h = heatsData[heatId];
+  const h = SwimStore.state.heatsData[heatId];
   if (!h) return;
   if (!h.hiddenLanes) h.hiddenLanes = [];
   if (!h.attachedPhotos) h.attachedPhotos = [];
@@ -1368,13 +1171,13 @@ function loadHeatState(heatId) {
     setBigButton("START", "#2e7d32");
   }
   selectedSource = null;
-  renderPhotoPanel(); // <--- Renderiza fotos al cambiar de prueba
+  renderPhotoPanel();
 }
 
 function renderLanes() {
   const container = document.getElementById('lanes-container');
   container.innerHTML = "";
-  const h = heatsData[currentHeatId];
+  const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
   if (!h) return;
   const splitsCount = h.activeSplits || 4;
   if (!h.hiddenLanes) h.hiddenLanes = [];
@@ -1488,12 +1291,12 @@ function renderLanes() {
       updateLaneHeaderColor(laneNum);
       autoSaveToStorage();
     };
-offInput.onkeydown = (e) => {
+    offInput.onkeydown = (e) => {
       if (e.key === 'Enter') {
         applyFormatting(e.target);
         laneObj.officialTime = e.target.value;
         e.target.blur();
-        adjustSplitsToOfficial(laneNum); // NUEVA LLAMADA
+        adjustSplitsToOfficial(laneNum);
         updateLaneHeaderColor(laneNum);
         autoSaveToStorage();
       }
@@ -1506,7 +1309,7 @@ offInput.onkeydown = (e) => {
     adjustBtn.onclick = () => {
       applyFormatting(offInput);
       laneObj.officialTime = offInput.value;
-      adjustSplitsToOfficial(laneNum); // NUEVA LLAMADA
+      adjustSplitsToOfficial(laneNum);
       updateLaneHeaderColor(laneNum);
       autoSaveToStorage();
     };
@@ -1539,7 +1342,7 @@ offInput.onkeydown = (e) => {
 }
 
 function takeLaneSplit(laneNum) {
-  const h = heatsData[currentHeatId];
+  const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
   if (!h) return;
 
   let currentMs = 0;
@@ -1558,8 +1361,8 @@ function takeLaneSplit(laneNum) {
     return;
   }
 
-  cardIdCounter++;
-  const newCardId = `card-${cardIdCounter}`;
+  SwimStore.state.cardIdCounter++;
+  const newCardId = `card-${SwimStore.state.cardIdCounter}`;
   
   laneObj.splits[emptyIndex] = { totalMs: currentMs, cardId: newCardId };
   recalculateLaneByNumber(laneNum);
@@ -1568,7 +1371,7 @@ function takeLaneSplit(laneNum) {
 }
 
 function openUnhideLaneModal() {
-  const h = heatsData[currentHeatId];
+  const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
   const listContainer = document.getElementById('hidden-lanes-list-container');
   listContainer.innerHTML = "";
 
@@ -1604,7 +1407,7 @@ function closeUnhideLaneModal() {
 }
 
 function restoreSelectedHiddenLanes() {
-  const h = heatsData[currentHeatId];
+  const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
   if (!h) return;
   const checkboxes = document.querySelectorAll('.unhide-checkbox:checked');
   if (checkboxes.length === 0) {
@@ -1621,7 +1424,7 @@ function restoreSelectedHiddenLanes() {
 }
 
 function updateLaneHeaderColor(laneNum) {
-  const h = heatsData[currentHeatId];
+  const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
   if (!h) return;
   const laneObj = h.laneData.find(l => l.lane === laneNum);
   const headerEl = document.getElementById(`lane-header-${laneNum}`);
@@ -1711,7 +1514,7 @@ function attachDoubleTapEvent(element, laneNum) {
 }
 
 function editSwimmerInfo(laneNum) {
-  const h = heatsData[currentHeatId];
+  const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
   if (!h) return;
   const laneObj = h.laneData.find(l => l.lane === laneNum);
   if (!laneObj) return;
@@ -1723,7 +1526,7 @@ function editSwimmerInfo(laneNum) {
     const newSeed = prompt(`Ingresa el tiempo de siembra (ej. 2:16.20):`, currentSeed);
     if (newSeed !== null) { laneObj.seedTime = newSeed.trim(); }
     renderLanes();
-    loadHeatState(currentHeatId);
+    loadHeatState(SwimStore.state.currentHeatId);
     autoSaveToStorage();
   }
 }
@@ -1753,7 +1556,7 @@ function processRosterImport() {
 function parseAndApplyRosterData(rawText) {
   const lines = rawText.split(/\r\n|\n/);
   let importedCount = 0;
-  let maxLaneDetected = activeLanes - 1;
+  let maxLaneDetected = SwimStore.state.activeLanes - 1;
   let lastTargetHeatId = null;
 
   lines.forEach((line) => {
@@ -1771,18 +1574,18 @@ function parseAndApplyRosterData(rawText) {
       const requiredSplits = calculateSplitsForDistance(distancia);
 
       let targetHeatId = null;
-      for (let hId in heatsData) {
-        if (heatsData[hId].name.toLowerCase() === heatFullName.toLowerCase()) {
+      for (let hId in SwimStore.state.heatsData) {
+        if (SwimStore.state.heatsData[hId].name.toLowerCase() === heatFullName.toLowerCase()) {
           targetHeatId = hId;
           break;
         }
       }
       if (!targetHeatId) {
-        totalHeatsCount++;
-        targetHeatId = totalHeatsCount;
-        heatsData[targetHeatId] = createEmptyHeatState(heatFullName, requiredSplits);
+        SwimStore.state.totalHeatsCount++;
+        targetHeatId = SwimStore.state.totalHeatsCount;
+        SwimStore.state.heatsData[targetHeatId] = createEmptyHeatState(heatFullName, requiredSplits);
       }
-      const heatObj = heatsData[targetHeatId];
+      const heatObj = SwimStore.state.heatsData[targetHeatId];
       heatObj.activeSplits = Math.max(heatObj.activeSplits, requiredSplits);
       if (!heatObj.hiddenLanes) heatObj.hiddenLanes = [];
 
@@ -1818,22 +1621,29 @@ function parseAndApplyRosterData(rawText) {
     }
   });
 
-if ((maxLaneDetected + 1) > activeLanes) {
-    activeLanes = maxLaneDetected + 1;
+  if ((maxLaneDetected + 1) > SwimStore.state.activeLanes) {
+    SwimStore.state.activeLanes = maxLaneDetected + 1;
     const laneSelect = document.getElementById('input-lanes');
     
     // Verificamos si la opción (ej. 7 carriles) ya existe en el menú
-    let optionExists = Array.from(laneSelect.options).some(opt => parseInt(opt.value) === activeLanes);
+    let optionExists = Array.from(laneSelect.options).some(opt => parseInt(opt.value) === SwimStore.state.activeLanes);
     
     // Si no existe, la creamos al vuelo
     if (!optionExists) {
       const newOpt = document.createElement('option');
-      newOpt.value = activeLanes;
-      newOpt.text = `${activeLanes} Carriles (Importado)`;
+      newOpt.value = SwimStore.state.activeLanes;
+      newOpt.text = `${SwimStore.state.activeLanes} Carriles (Importado)`;
       laneSelect.appendChild(newOpt);
     }
     
-    laneSelect.value = activeLanes;
+    laneSelect.value = SwimStore.state.activeLanes;
+  }
+  saveCurrentHeatState();
+  renderHeatSelectOptions();
+  if (lastTargetHeatId) {
+    SwimStore.state.currentHeatId = parseInt(lastTargetHeatId);
+    document.getElementById('heat-select').value = SwimStore.state.currentHeatId;
+    loadHeatState(SwimStore.state.currentHeatId);
   }
   autoSaveToStorage();
   closeRosterModal();
@@ -1979,7 +1789,7 @@ function handlePoolTap() {
 }
 
 function executeMove(sourceEl, targetCell) {
-  const h = heatsData[currentHeatId];
+  const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
   const targetLaneNum = parseInt(targetCell.dataset.lane);
   const targetSplitIdx = parseInt(targetCell.dataset.split);
   const targetLaneObj = h.laneData.find(l => l.lane === targetLaneNum);
@@ -2023,7 +1833,7 @@ function executeMove(sourceEl, targetCell) {
 }
 
 function executeMoveToPool(sourceEl) {
-  const h = heatsData[currentHeatId];
+  const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
   if (sourceEl.classList.contains('split-cell')) {
     const laneNum = parseInt(sourceEl.dataset.lane);
     const splitIdx = parseInt(sourceEl.dataset.split);
@@ -2046,7 +1856,7 @@ function executeMoveToPool(sourceEl) {
 }
 
 function executeDuplicate(sourceEl) {
-  const h = heatsData[currentHeatId];
+  const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
   let timeMs = 0;
   if (sourceEl.classList.contains('time-card')) {
     timeMs = parseInt(sourceEl.dataset.ms);
@@ -2071,7 +1881,7 @@ function executeDuplicate(sourceEl) {
 }
 
 function executeDelete(sourceEl) {
-  const h = heatsData[currentHeatId];
+  const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
   if (sourceEl.classList.contains('time-card')) {
     sourceEl.remove();
   } else if (sourceEl.classList.contains('split-cell')) {
@@ -2101,7 +1911,7 @@ function duplicateSelectedCard() { if (selectedSource) executeDuplicate(selected
 function deleteSelectedCard() { if (selectedSource) executeDelete(selectedSource); }
 
 function createTimeCard(ms, id = null, isNewSplit = false) {
-  if (!id) { cardIdCounter++; id = `card-${cardIdCounter}`; }
+  if (!id) { SwimStore.state.cardIdCounter++; id = `card-${SwimStore.state.cardIdCounter}`; }
   const card = document.createElement('div');
   card.className = 'time-card';
   card.id = id;
@@ -2119,7 +1929,7 @@ function createTimeCard(ms, id = null, isNewSplit = false) {
 function returnTimeToPool(ms, id) { createTimeCard(ms, id); }
 
 function recalculateLaneByNumber(laneNum) {
-  const h = heatsData[currentHeatId];
+  const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
   const laneObj = h.laneData.find(l => l.lane === laneNum);
   const laneRow = document.querySelector(`.lane-row[data-lane-number="${laneNum}"]`);
   if (!laneRow || !laneObj) return;
@@ -2161,18 +1971,17 @@ function recalculateLaneByNumber(laneNum) {
   });
   updateLaneHeaderColor(laneNum);
 }
+
 function adjustSplitsToOfficial(laneNum) {
-  const h = heatsData[currentHeatId];
+  const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
   if (!h) return;
   
   const laneObj = h.laneData.find(l => l.lane === laneNum);
   if (!laneObj || !laneObj.officialTime) return;
 
-  // Convertir el tiempo oficial introducido a milisegundos
   const officialMs = parseTimeToMs(laneObj.officialTime);
   if (isNaN(officialMs) || officialMs <= 0) return;
 
-  // Encontrar cuál fue el último split marcado por el cronómetro
   let lastValidIdx = -1;
   for (let i = laneObj.splits.length - 1; i >= 0; i--) {
     if (laneObj.splits[i] && laneObj.splits[i].totalMs !== null) {
@@ -2181,29 +1990,26 @@ function adjustSplitsToOfficial(laneNum) {
     }
   }
 
-  // Si no hay splits tomados, no hay nada que ajustar
   if (lastValidIdx === -1) return; 
 
   const recordedTotalMs = laneObj.splits[lastValidIdx].totalMs;
   if (recordedTotalMs <= 0) return;
 
-  // Calcular el factor de ratio (Diferencia porcentual entre oficial y cronometrado)
   const ratio = officialMs / recordedTotalMs;
 
-  // Ajustar todos los splits acumulados de forma proporcional
   for (let i = 0; i <= lastValidIdx; i++) {
     laneObj.splits[i].totalMs = Math.round(laneObj.splits[i].totalMs * ratio);
   }
 
-  // Refrescar los componentes visuales del carril para mostrar los nuevos parciales
   recalculateLaneByNumber(laneNum);
 }
+
 function handleBigButtonClick() {
   const now = performance.now();
   if (now - lastBigButtonPressTime < 40) return;
   lastBigButtonPressTime = now;
 
-  const h = heatsData[currentHeatId];
+  const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
   if (!h.isRunning && !h.isPaused) {
     h.isRunning = true;
     h.isPaused = false;
@@ -2221,8 +2027,8 @@ function handleBigButtonClick() {
       if (laneObj) {
         const emptyIndex = laneObj.splits.findIndex(s => s === null);
         if (emptyIndex !== -1) {
-          cardIdCounter++;
-          const newCardId = `card-${cardIdCounter}`;
+          SwimStore.state.cardIdCounter++;
+          const newCardId = `card-${SwimStore.state.cardIdCounter}`;
           laneObj.splits[emptyIndex] = { totalMs: currentMs, cardId: newCardId };
           recalculateLaneByNumber(singleLaneNum);
           autoSaveToStorage();
@@ -2240,7 +2046,7 @@ function handleBigButtonClick() {
 }
 
 function stopClock() {
-  const h = heatsData[currentHeatId];
+  const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
   if (h.isRunning) {
     timerWorker.postMessage('stop');
     h.isRunning = false;
@@ -2251,7 +2057,7 @@ function stopClock() {
 }
 
 function resetClock() {
-  const h = heatsData[currentHeatId];
+  const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
   timerWorker.postMessage('stop');
   h.isRunning = false;
   h.isPaused = false;
@@ -2266,7 +2072,7 @@ function resetClock() {
     l.officialTime = "";
   });
   renderLanes();
-  renderPhotoPanel(); // <--- Limpia el panel de fotos
+  renderPhotoPanel();
   autoSaveToStorage();
 }
 
@@ -2276,7 +2082,7 @@ function setBigButton(text, bgColor) {
 }
 
 function updateClock() {
-  const h = heatsData[currentHeatId];
+  const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
   if (!h.isRunning) return;
   h.elapsedTime = performance.now() - h.startTime;
   document.getElementById('clock-display').innerText = formatTime(h.elapsedTime);
@@ -2325,6 +2131,7 @@ function applyFormatting(inputEl) {
     inputEl.value = formatTime(ms);
   }
 }
+
 /* ==========================================================================
    MOTOR DE ZOOM Y PANEO PARA FOTOGRAFÍAS (MÓVIL Y ESCRITORIO)
    ========================================================================== */
@@ -2335,7 +2142,6 @@ function setImgTransform() {
   previewImage.style.transform = `translate(${imgPointX}px, ${imgPointY}px) scale(${imgScale})`;
 }
 
-// 1. Controladores de Escritorio (Rueda del ratón y Clic sostenido)
 imageModalBox.addEventListener('wheel', (e) => {
   if (!document.getElementById('image-modal').classList.contains('open')) return;
   e.preventDefault();
@@ -2372,7 +2178,6 @@ window.addEventListener('mousemove', (e) => {
   setImgTransform();
 });
 
-// 2. Controladores Táctiles Móviles (Pinch-to-zoom y Arrastre con un dedo)
 imageModalBox.addEventListener('touchstart', (e) => {
   if (!document.getElementById('image-modal').classList.contains('open')) return;
   
@@ -2398,7 +2203,6 @@ imageModalBox.addEventListener('touchmove', (e) => {
       e.touches[0].clientY - e.touches[1].clientY
     );
     
-    // Calcular el punto medio entre los dos dedos (centro del zoom)
     const cx = (e.touches[0].clientX + e.touches[1].clientX) / 2;
     const cy = (e.touches[0].clientY + e.touches[1].clientY) / 2;
     const xs = (cx - imgPointX) / imgScale;
@@ -2407,7 +2211,7 @@ imageModalBox.addEventListener('touchmove', (e) => {
     if (imgInitialPinchDist > 0) {
       const zoomFactor = currentDistance / imgInitialPinchDist;
       imgScale *= zoomFactor;
-      imgInitialPinchDist = currentDistance; // Actualizar iterativamente
+      imgInitialPinchDist = currentDistance; 
 
       if (imgScale <= 1) { 
         imgScale = 1; imgPointX = 0; imgPointY = 0; 
@@ -2428,6 +2232,19 @@ imageModalBox.addEventListener('touchend', () => {
   imgInitialPinchDist = 0;
   imgPanning = false;
 });  
+
+/* ==========================================================================
+   REGISTRO DEL SERVICE WORKER PARA PWA
+   ========================================================================== */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').then(registration => {
+      console.log('ServiceWorker registrado con éxito. PWA Activa.', registration.scope);
+    }).catch(err => {
+      console.log('Fallo en el registro del ServiceWorker:', err);
+    });
+  });
+}
 </script>
 </body>
 </html>
