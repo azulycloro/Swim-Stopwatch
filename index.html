@@ -430,53 +430,11 @@ function normalizeText(text) {
   return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 }
 
-let originalSyncBidirectional = function syncWithCloudBidirectional() {
+function syncWithCloudBidirectional() {
   if (!SwimStore.state.googleWebAppUrl || !navigator.onLine) return;
 
-  saveCurrentHeatState();
-  
-  const cleanHeatsData = {};
-  for (let hId in SwimStore.state.heatsData) {
-    cleanHeatsData[hId] = {
-      name: SwimStore.state.heatsData[hId].name,
-      laneData: SwimStore.state.heatsData[hId].laneData
-    };
-  }
+  updateSyncDotState('pending');
 
-  const payload = {
-    tournamentName: SwimStore.state.tournamentName,
-    sessionType: SwimStore.state.sessionType,
-    coachName: SwimStore.state.coachName,
-    heats: cleanHeatsData
-  };
-
-  const ind = document.getElementById('save-status-indicator');
-  if (ind) ind.innerText = "☁️ Sincronizando con Google Sheets...";
-
-  fetch(SwimStore.state.googleWebAppUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain' },
-    body: JSON.stringify(payload)
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.result === "success" && data.rows) {
-      processCloudRows(data.rows);
-      SwimStore.state.hasUnsyncedChanges = false;
-      if (ind) ind.innerText = "✓ Sincronizado OK";
-    }
-  })
-  .catch(err => {
-    console.warn("Error en sync bidireccional:", err);
-    if (ind) ind.innerText = "⚠️ Modo Offline (Cambios pendientes)";
-  });
-};
-
-let originalSyncBidirectional = function syncWithCloudBidirectional() {
-  if (!SwimStore.state.googleWebAppUrl || !navigator.onLine) return;
-
-  // REGLA CRÍTICA: Solo enviamos datos a Google si el entrenador hizo cambios locales en la app.
-  // Si no hizo nada, mandaremos un objeto vacío para forzar una lectura pasiva (GET) sin reescribir.
   let cleanHeatsData = {};
   
   if (SwimStore.state.hasUnsyncedChanges) {
@@ -493,7 +451,7 @@ let originalSyncBidirectional = function syncWithCloudBidirectional() {
     tournamentName: SwimStore.state.tournamentName,
     sessionType: SwimStore.state.sessionType,
     coachName: SwimStore.state.coachName,
-    heats: cleanHeatsData // Irá vacío si no hay cambios, evitando que se borren los laps de otros entrenadores
+    heats: cleanHeatsData 
   };
 
   const ind = document.getElementById('save-status-indicator');
@@ -510,13 +468,16 @@ let originalSyncBidirectional = function syncWithCloudBidirectional() {
       processCloudRows(data.rows);
       SwimStore.state.hasUnsyncedChanges = false;
       if (ind) ind.innerText = "✓ Sincronizado OK";
+      setTimeout(() => { updateSyncDotState('synced'); }, 3000);
     }
   })
   .catch(err => {
     console.warn("Error en sync bidireccional:", err);
     if (ind) ind.innerText = "⚠️ Modo Offline (Cambios pendientes)";
+    setTimeout(() => { updateSyncDotState('pending'); }, 3000);
   });
-};
+}
+
 function updateSyncDotState(status) {
   const dot = document.getElementById('sync-status-dot');
   if (!dot) return;
@@ -534,8 +495,6 @@ function processCloudRows(rows) {
     const heatName = row[4];
     const laneNum = parseInt(row[5], 10);
     const swimmerName = row[6];
-    // No usamos el officialTime proveniente de la nube para rellenar la caja local.
-    // Garantizamos que la caja amarilla sea EXCLUSIVAMENTE de digitación manual y local.
     const splitsText = row[8];
 
     if (normalizeText(tName) === localTournament) {
@@ -574,7 +533,6 @@ function processCloudRows(rows) {
           const splitStrings = splitsText.split(',').map(s => s.trim());
           splitStrings.forEach((sStr, sIdx) => {
             if (sStr !== "") {
-              // Limpiamos los paréntesis (ej. "01:05.20 (+01:05.20)") antes de pasarlo al lector
               const cleanStr = sStr.split(' ')[0];
               const ms = parseTimeToMs(cleanStr);
               if (!isNaN(ms) && ms > 0) {
@@ -2041,20 +1999,14 @@ function adjustSplitsToOfficial(laneNum) {
   const lastSplitIndex = h.activeSplits - 1;
 
   if (lastValidIdx === -1) {
-    // Caso 1: El carril estaba vacío y no había ningún split.
-    // Creamos el tiempo oficial directamente en la última celda de split de la carrera.
     SwimStore.state.cardIdCounter++;
     laneObj.splits[lastSplitIndex] = { totalMs: officialMs, cardId: `card-${SwimStore.state.cardIdCounter}` };
   } 
   else if (lastValidIdx < lastSplitIndex) {
-    // Caso 2: Tomaste splits pero te faltaron los del final.
-    // Mantenemos los que ya habías tomado y ponemos el oficial cerrando la carrera.
     SwimStore.state.cardIdCounter++;
     laneObj.splits[lastSplitIndex] = { totalMs: officialMs, cardId: `card-${SwimStore.state.cardIdCounter}` };
   } 
   else {
-    // Caso 3: Tomaste todos los splits pero quieres ajustar el último a la placa oficial.
-    // Se ajustan todos proporcionalmente.
     const recordedTotalMs = laneObj.splits[lastValidIdx].totalMs;
     if (recordedTotalMs > 0) {
       const ratio = officialMs / recordedTotalMs;
@@ -2064,24 +2016,10 @@ function adjustSplitsToOfficial(laneNum) {
     }
   }
 
-  // Refrescamos visualmente los cuadros para mostrar el nuevo tiempo total y splits
   recalculateLaneByNumber(laneNum);
   updateLaneHeaderColor(laneNum);
   autoSaveToStorage();
 }
-
-function updateSyncDotState(status) {
-  const dot = document.getElementById('sync-status-dot');
-  if (!dot) return;
-  dot.className = ""; 
-  if (status === 'synced') dot.classList.add('synced');
-  else if (status === 'pending') dot.classList.add('pending');
-}
-
-window.addEventListener('beforeunload', (e) => {
-  saveCurrentHeatState();
-  autoSaveToStorage();
-});
 
 let touchDragElement = null;
 let touchClone = null;
@@ -2494,7 +2432,6 @@ function formatTime(ms) {
 
 function parseTimeToMs(timeStr) {
   if (!timeStr) return NaN;
-  // Eliminamos cualquier dato que venga entre paréntesis (ej. lap importado) para evitar que la conversión matemática se quiebre
   timeStr = timeStr.trim().split(' ')[0]; 
   
   let parts = timeStr.split(':');
