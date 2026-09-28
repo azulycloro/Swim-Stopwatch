@@ -455,7 +455,7 @@ function syncWithCloudBidirectional() {
   .then(response => response.json())
   .then(data => {
     if (data.result === "success" && data.rows) {
-      processCloudRows(data.rows);
+      (data.rows);
       if (ind) ind.innerText = "✓ Sincronización automática OK";
     }
   })
@@ -473,7 +473,6 @@ function normalizeText(text) {
 
 function processCloudRows(rows) {
   let dataChanged = false;
-  // Normalizamos el nombre local del torneo para la comparación
   const localTournament = normalizeText(SwimStore.state.tournamentName);
 
   rows.forEach(row => {
@@ -484,7 +483,6 @@ function processCloudRows(rows) {
     const officialTime = row[7];
     const splitsText = row[8];
 
-    // Comparación robusta: ignora mayúsculas, minúsculas y tildes
     if (normalizeText(tName) === localTournament) {
       let targetHeatId = null;
 
@@ -510,20 +508,28 @@ function processCloudRows(rows) {
 
       let targetLaneObj = heatObj.laneData.find(l => l.lane === laneNum);
       if (targetLaneObj) {
+        // 1. Fusión de nombres
         if (swimmerName && swimmerName !== `Carril ${laneNum}` && (!targetLaneObj.swimmerName || targetLaneObj.swimmerName === "")) {
           targetLaneObj.swimmerName = swimmerName;
           dataChanged = true;
         }
-        if (officialTime && officialTime !== "N/A" && (!targetLaneObj.officialTime || targetLaneObj.officialTime === "")) {
-          targetLaneObj.officialTime = officialTime;
-          dataChanged = true;
+
+        // 2. Extraer el último split de la cadena de texto de la nube para validación
+        let lastSplitTime = "";
+        if (splitsText) {
+          const splitStrings = splitsText.split(',').map(s => s.trim());
+          const lastSplitStr = splitStrings[splitStrings.length - 1];
+          if (lastSplitStr) {
+            lastSplitTime = lastSplitStr.split(' ')[0]; // Quita el (+00:00.00)
+          }
         }
 
+        // 3. Importar los splits a la interfaz
         if (splitsText) {
           const splitStrings = splitsText.split(',').map(s => s.trim());
           splitStrings.forEach((sStr, sIdx) => {
             if (sStr !== "") {
-              const ms = (sStr);
+              const ms = parseTimeToMs(sStr);
               if (!isNaN(ms) && ms > 0) {
                 if (!targetLaneObj.splits[sIdx] || targetLaneObj.splits[sIdx].totalMs === null) {
                   SwimStore.state.cardIdCounter++;
@@ -533,6 +539,13 @@ function processCloudRows(rows) {
               }
             }
           });
+        }
+
+        // 4. Fusión de Tiempo Oficial SOLO si es distinto al último split
+        // Esto evita rellenar la caja manual si el servidor autocompletó la columna H con el tiempo total
+        if (officialTime && officialTime !== "N/A" && officialTime !== lastSplitTime && (!targetLaneObj.officialTime || targetLaneObj.officialTime === "")) {
+          targetLaneObj.officialTime = officialTime;
+          dataChanged = true;
         }
       }
     }
