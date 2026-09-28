@@ -472,12 +472,51 @@ let originalSyncBidirectional = function syncWithCloudBidirectional() {
   });
 };
 
-function syncWithCloudBidirectional() {
-  updateSyncDotState('pending');
-  originalSyncBidirectional();
-  setTimeout(() => { updateSyncDotState('synced'); }, 3000);
-}
+let originalSyncBidirectional = function syncWithCloudBidirectional() {
+  if (!SwimStore.state.googleWebAppUrl || !navigator.onLine) return;
 
+  // REGLA CRÍTICA: Solo enviamos datos a Google si el entrenador hizo cambios locales en la app.
+  // Si no hizo nada, mandaremos un objeto vacío para forzar una lectura pasiva (GET) sin reescribir.
+  let cleanHeatsData = {};
+  
+  if (SwimStore.state.hasUnsyncedChanges) {
+    saveCurrentHeatState();
+    for (let hId in SwimStore.state.heatsData) {
+      cleanHeatsData[hId] = {
+        name: SwimStore.state.heatsData[hId].name,
+        laneData: SwimStore.state.heatsData[hId].laneData
+      };
+    }
+  }
+
+  const payload = {
+    tournamentName: SwimStore.state.tournamentName,
+    sessionType: SwimStore.state.sessionType,
+    coachName: SwimStore.state.coachName,
+    heats: cleanHeatsData // Irá vacío si no hay cambios, evitando que se borren los laps de otros entrenadores
+  };
+
+  const ind = document.getElementById('save-status-indicator');
+  if (ind) ind.innerText = SwimStore.state.hasUnsyncedChanges ? "☁️ Sincronizando cambios con la nube..." : "☁️ Buscando actualizaciones de otros...";
+
+  fetch(SwimStore.state.googleWebAppUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify(payload)
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.result === "success" && data.rows) {
+      processCloudRows(data.rows);
+      SwimStore.state.hasUnsyncedChanges = false;
+      if (ind) ind.innerText = "✓ Sincronizado OK";
+    }
+  })
+  .catch(err => {
+    console.warn("Error en sync bidireccional:", err);
+    if (ind) ind.innerText = "⚠️ Modo Offline (Cambios pendientes)";
+  });
+};
 function updateSyncDotState(status) {
   const dot = document.getElementById('sync-status-dot');
   if (!dot) return;
