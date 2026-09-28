@@ -594,7 +594,7 @@ let activeModalPhotoIndex = null;
 
 /* IndexedDB & Outbox Pattern Architecture[cite: 1] */
 const DB_NAME = 'SwimStopwatchDB';
-const DB_VERSION = 1;
+const DB_VERSION = 2; // ¡CRÍTICO! Cambiar a versión 2
 let db = null;
 
 function initIndexedDB() {
@@ -612,6 +612,10 @@ function initIndexedDB() {
       }
       if (!database.objectStoreNames.contains('outbox')) {
         database.createObjectStore('outbox', { keyPath: 'id', autoIncrement: true });
+      }
+      // NUEVO: Bóveda exclusiva para fotos pesadas
+      if (!database.objectStoreNames.contains('photos')) {
+        database.createObjectStore('photos', { keyPath: 'id' });
       }
     };
   });
