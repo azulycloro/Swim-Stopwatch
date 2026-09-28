@@ -635,10 +635,10 @@ function processOutbox() {
     if (!items || items.length === 0) return;
 
     const item = items[0];
-    fetch(googleWebAppUrl, {
+fetch(googleWebAppUrl, {
       method: 'POST',
       mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'text/plain' }, // ¡Este es el cambio vital!
       body: JSON.stringify(item.payload)
     }).then(() => {
       const delTx = db.transaction(['outbox'], 'readwrite');
