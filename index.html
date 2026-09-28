@@ -1154,13 +1154,15 @@ function autoSaveToStorage() {
 }
 
 /* FUNCIÓN CORREGIDA PARA LIMPIAR DATOS SIN PANTALLA EN BLANCO */
+/* FUNCIÓN CORREGIDA PARA LIMPIAR DATOS COMPLETAMENTE */
 function clearLocalStorage() {
-  if (confirm("¿Estás seguro de borrar todos los datos acumulados en esta base de datos local?")) {
+  if (confirm("¿Estás seguro de borrar todos los datos acumulados, INCLUYENDO FOTOGRAFÍAS, en esta base de datos local?")) {
     if (db) {
       try {
-        const transaction = db.transaction(['sessions', 'outbox'], 'readwrite');
+        const transaction = db.transaction(['sessions', 'outbox', 'photos'], 'readwrite');
         transaction.objectStore('sessions').clear();
         transaction.objectStore('outbox').clear();
+        transaction.objectStore('photos').clear(); // Vaciamos la bóveda
         transaction.oncomplete = () => {
           heatsData = { 1: createEmptyHeatState("Prueba 1", 2) };
           currentHeatId = 1;
