@@ -239,7 +239,7 @@ body { display: flex; height: 100vh; background-color: #f0f4f8; overflow: hidden
     </div>
   </div>
 
-  <footer id="app-footer-info">
+<footer id="app-footer-info">
     <div class="footer-meta-item">
       <span>Entrenador:</span>
       <strong id="coach-name-display">Juan Albarracin</strong>
@@ -250,11 +250,13 @@ body { display: flex; height: 100vh; background-color: #f0f4f8; overflow: hidden
     </div>
     <div class="footer-meta-item">
       <span>App:</span>
-      <strong>v4.0 (PWA)</strong>
+      <strong>v4.1 (Pro)</strong>
     </div>
-    <div id="save-status-indicator">✓ Sincronización Offline-First activa</div>
+    <div style="display: flex; align-items: center; gap: 6px;">
+      <span id="sync-status-dot" class="synced" title="Estado de sincronización"></span>
+      <div id="save-status-indicator">✓ Sincronización Offline-First activa</div>
+    </div>
   </footer>
-</div>
 
 <!-- Modales -->
 <div class="modal" id="offset-modal">
