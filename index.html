@@ -156,6 +156,10 @@ body { display: flex; height: 100vh; background-color: #f0f4f8; overflow: hidden
   .header-btn { padding: 8px; font-size: 14px; }
   #clock-display { font-size: 20px; }
   #app-footer-info { font-size: 10px; padding: 4px 8px; }
+  #sync-status-dot { width: 10px; height: 10px; border-radius: 50%; background: #e74c3c; display: inline-block; transition: background 0.3s; }
+  #sync-status-dot.synced { background: #2ecc71; }
+  #sync-status-dot.pending { background: #f39c12; animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
 }
 
 /* Modales */
