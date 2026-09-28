@@ -529,12 +529,23 @@ function renderPhotoPanel() {
   });
 }
 
+// Variables globales de estado para el motor de Zoom/Paneo
+let imgScale = 1, imgPointX = 0, imgPointY = 0;
+let imgPanning = false, imgStart = { x: 0, y: 0 }, imgInitialPinchDist = 0;
+
 function viewPhoto(index) {
   const h = heatsData[currentHeatId];
   if (!h || !h.attachedPhotos || !h.attachedPhotos[index]) return;
   activeModalPhotoIndex = index;
   const modalImg = document.getElementById('full-image-preview');
   modalImg.src = h.attachedPhotos[index].dataUrl;
+  
+  // Resetear el motor de zoom al abrir una foto nueva
+  imgScale = 1;
+  imgPointX = 0;
+  imgPointY = 0;
+  modalImg.style.transform = `translate(0px, 0px) scale(1)`;
+  
   document.getElementById('image-modal').classList.add('open');
 }
 
