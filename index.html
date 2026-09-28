@@ -413,7 +413,12 @@ const SwimStore = {
     cardIdCounter: 0,
     activeModalPhotoIndex: null
   }
-  function syncWithCloudBidirectional() {
+};
+
+/* ==========================================================================
+   SINCRONIZACIÓN BIDIRECCIONAL AUTOMÁTICA (TWO-WAY SYNC)
+   ========================================================================== */
+function syncWithCloudBidirectional() {
   if (!SwimStore.state.googleWebAppUrl || !navigator.onLine) return;
 
   saveCurrentHeatState();
@@ -454,7 +459,6 @@ const SwimStore = {
   });
 }
 
-// Función auxiliar que procesa y funde los datos que vienen de la nube sin pisar datos locales activos
 function processCloudRows(rows) {
   let dataChanged = false;
 
@@ -491,7 +495,6 @@ function processCloudRows(rows) {
 
       let targetLaneObj = heatObj.laneData.find(l => l.lane === laneNum);
       if (targetLaneObj) {
-        // Fusión inteligente: Si el dato local está vacío pero la nube trae información del otro entrenador, la adoptamos
         if (swimmerName && swimmerName !== `Carril ${laneNum}` && !targetLaneObj.swimmerName) {
           targetLaneObj.swimmerName = swimmerName;
           dataChanged = true;
@@ -518,13 +521,11 @@ function processCloudRows(rows) {
     }
   });
 
-  // Si la nube trajo datos nuevos de otros entrenadores, refrescamos la pantalla suavemente
   if (dataChanged) {
     loadHeatState(SwimStore.state.currentHeatId);
     autoSaveToStorage();
   }
 }
-};
 
 const workerCode = `
 let timer = null;
@@ -543,10 +544,10 @@ let selectedSource = null;
 let lastBigButtonPressTime = 0;
 
 /* ==========================================================================
-   INDEXED DB (Patrón Outbox y Almacenamiento de Fotos v2)
+   INDEXED DB (Patrón Outbox y Bóveda de Fotos v2)
    ========================================================================== */
 const DB_NAME = 'SwimStopwatchDB';
-const DB_VERSION = 2; // ¡CRÍTICO! Versión 2 para soportar la bóveda de fotos
+const DB_VERSION = 2; 
 let db = null;
 
 function initIndexedDB() {
@@ -565,7 +566,6 @@ function initIndexedDB() {
       if (!database.objectStoreNames.contains('outbox')) {
         database.createObjectStore('outbox', { keyPath: 'id', autoIncrement: true });
       }
-      // NUEVO: Bóveda exclusiva para fotos pesadas
       if (!database.objectStoreNames.contains('photos')) {
         database.createObjectStore('photos', { keyPath: 'id' });
       }
@@ -610,7 +610,6 @@ function addToOutbox(payload) {
   });
 }
 
-// Funciones secundarias para almacenar fotos fuera del bucle de rendimiento
 function savePhotoToIDB(photoObj) {
   if (!db) return Promise.resolve();
   return new Promise((resolve, reject) => {
@@ -686,9 +685,209 @@ window.addEventListener('offline', () => {
 });
 
 /* ==========================================================================
+   GESTIÓN DE FOTOGRAFÍAS (IndexedDB v2)
+   ========================================================================== */
+function triggerCameraInput() {
+  const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
+  if (!h) return;
+  if (!h.attachedPhotos) h.attachedPhotos = [];
+  
+  if (h.attachedPhotos.length >= 4) {
+    alert("Se ha alcanzado el límite máximo de 4 fotografías para esta prueba.");
+    return;
+  }
+  document.getElementById('camera-file-input').click();
+}
+
+function handlePhotoSelect(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
+  if (!h) return;
+  if (!h.attachedPhotos) h.attachedPhotos = [];
+
+  if (h.attachedPhotos.length >= 4) {
+    alert("Se ha alcanzado el límite máximo de 4 fotografías para esta prueba.");
+    event.target.value = "";
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const photoId = 'photo_' + Date.now();
+    const photoDataUrl = e.target.result;
+    
+    const photoMeta = {
+      id: photoId,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+      name: file.name || `Foto_${h.attachedPhotos.length + 1}`
+    };
+    h.attachedPhotos.push(photoMeta);
+    
+    savePhotoToIDB({ id: photoId, dataUrl: photoDataUrl }).then(() => {
+      renderPhotoPanel();
+      autoSaveToStorage();
+    });
+  };
+  reader.readAsDataURL(file);
+  event.target.value = "";
+}
+
+async function renderPhotoPanel() {
+  const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
+  const panel = document.getElementById('photo-footer-panel');
+  const btnAdd = document.getElementById('btn-add-photo');
+  if (!h || !panel) return;
+
+  if (!h.attachedPhotos) h.attachedPhotos = [];
+
+  if (btnAdd) {
+    btnAdd.innerText = `📷 Tomar Foto (${h.attachedPhotos.length}/4)`;
+    btnAdd.style.opacity = h.attachedPhotos.length >= 4 ? "0.6" : "1";
+  }
+
+  if (h.attachedPhotos.length === 0) {
+    panel.style.display = 'none';
+    panel.innerHTML = '';
+    return;
+  }
+
+  panel.style.display = 'flex';
+  panel.innerHTML = '';
+
+  for (let idx = 0; idx < h.attachedPhotos.length; idx++) {
+    const photoMeta = h.attachedPhotos[idx];
+    const item = document.createElement('div');
+    item.className = 'footer-photo-item';
+
+    const img = document.createElement('img');
+    img.className = 'footer-photo-thumb';
+    img.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='50' height='50'><rect width='50' height='50' fill='#fdf2f2'/></svg>"; 
+    
+    if (photoMeta.dataUrl) {
+      img.src = photoMeta.dataUrl;
+    } else {
+      getPhotoFromIDB(photoMeta.id).then(photoData => {
+        if (photoData && photoData.dataUrl) img.src = photoData.dataUrl;
+      });
+    }
+
+    img.onclick = () => viewPhoto(idx);
+
+    const details = document.createElement('div');
+    details.className = 'footer-photo-details';
+
+    const title = document.createElement('div');
+    title.className = 'footer-photo-title';
+    title.innerText = `Foto ${idx + 1} de 4 (${photoMeta.timestamp})`;
+
+    const filename = document.createElement('div');
+    filename.className = 'footer-photo-filename';
+    filename.innerText = photoMeta.name || `Foto_${idx + 1}`;
+
+    details.appendChild(title);
+    details.appendChild(filename);
+
+    const actions = document.createElement('div');
+    actions.className = 'footer-photo-actions';
+
+    const btnView = document.createElement('button');
+    btnView.className = 'header-btn';
+    btnView.style.cssText = 'padding: 4px 8px; font-size: 11px;';
+    btnView.innerText = '👁️';
+    btnView.title = 'Ver fotografía';
+    btnView.onclick = () => viewPhoto(idx);
+
+    const btnDel = document.createElement('button');
+    btnDel.className = 'header-btn';
+    btnDel.style.cssText = 'padding: 4px 8px; font-size: 11px; color: #d32f2f; border-color: #ef9a9a;';
+    btnDel.innerText = '🗑️';
+    btnDel.title = 'Eliminar fotografía';
+    btnDel.onclick = () => deletePhoto(idx);
+
+    actions.appendChild(btnView);
+    actions.appendChild(btnDel);
+
+    item.appendChild(img);
+    item.appendChild(details);
+    item.appendChild(actions);
+
+    panel.appendChild(item);
+  }
+}
+
+let imgScale = 1, imgPointX = 0, imgPointY = 0;
+let imgPanning = false, imgStart = { x: 0, y: 0 }, imgInitialPinchDist = 0;
+
+async function viewPhoto(index) {
+  const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
+  if (!h || !h.attachedPhotos || !h.attachedPhotos[index]) return;
+  SwimStore.state.activeModalPhotoIndex = index;
+  
+  const photoMeta = h.attachedPhotos[index];
+  let finalDataUrl = photoMeta.dataUrl;
+  
+  if (!finalDataUrl) {
+    const photoData = await getPhotoFromIDB(photoMeta.id);
+    if (photoData) finalDataUrl = photoData.dataUrl;
+  }
+
+  const modalImg = document.getElementById('full-image-preview');
+  modalImg.src = finalDataUrl || "";
+  
+  imgScale = 1;
+  imgPointX = 0;
+  imgPointY = 0;
+  modalImg.style.transform = `translate(0px, 0px) scale(1)`;
+  
+  document.getElementById('image-modal').classList.add('open');
+}
+
+function closePhotoModal() {
+  SwimStore.state.activeModalPhotoIndex = null;
+  document.getElementById('image-modal').classList.remove('open');
+}
+
+async function downloadPhotoModalActive() {
+  const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
+  if (SwimStore.state.activeModalPhotoIndex === null || !h || !h.attachedPhotos[SwimStore.state.activeModalPhotoIndex]) return;
+  
+  const photoMeta = h.attachedPhotos[SwimStore.state.activeModalPhotoIndex];
+  let finalDataUrl = photoMeta.dataUrl;
+  
+  if (!finalDataUrl) {
+    const photoData = await getPhotoFromIDB(photoMeta.id);
+    if (photoData) finalDataUrl = photoData.dataUrl;
+  }
+
+  if (!finalDataUrl) return;
+
+  const a = document.createElement('a');
+  a.href = finalDataUrl;
+  a.download = `${getFormattedTournamentLabel()}_${h.name.replace(/\s+/g, '_')}_Foto_${SwimStore.state.activeModalPhotoIndex + 1}.png`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+function deletePhoto(index) {
+  const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
+  if (!h || !h.attachedPhotos || !h.attachedPhotos[index]) return;
+  
+  if (confirm(`¿Eliminar la Foto ${index + 1}?`)) {
+    const photoId = h.attachedPhotos[index].id;
+    deletePhotoFromIDB(photoId).then(() => {
+      h.attachedPhotos.splice(index, 1);
+      renderPhotoPanel();
+      autoSaveToStorage();
+    });
+  }
+}
+
+/* ==========================================================================
    INICIALIZACIÓN Y CONFIGURACIÓN GLOBAL
    ========================================================================== */
-
 function getFormattedTournamentLabel() {
   const now = new Date();
   const dd = String(now.getDate()).padStart(2, '0');
@@ -722,6 +921,11 @@ async function initApp() {
     const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
     if (h && h.isRunning) { autoSaveToStorage(); }
   }, 15000);
+
+  // Sincronización bidireccional automática con la nube cada 30 segundos
+  setInterval(() => {
+    syncWithCloudBidirectional();
+  }, 30000);
 
   const savedState = await loadStateFromIDB();
   if (savedState) {
@@ -971,42 +1175,7 @@ function importSessionJSON(event) {
 }
 
 function syncToGoogleSheet() {
-  if (!SwimStore.state.googleWebAppUrl) {
-    alert("Por favor configura primero la URL del Web App de Google Apps Script en Ajustes (⚙️).");
-    openSettings();
-    return;
-  }
-  saveCurrentHeatState();
-  
-  // 1. Crear una copia limpia y ligera de los datos, excluyendo las fotografías
-  const cleanHeatsData = {};
-  for (let hId in SwimStore.state.heatsData) {
-    cleanHeatsData[hId] = {
-      name: SwimStore.state.heatsData[hId].name,
-      laneData: SwimStore.state.heatsData[hId].laneData
-      // Omitimos intencionalmente 'attachedPhotos' para evitar saturar la red
-    };
-  }
-
-  // 2. Empaquetar solo el texto
-  const payload = {
-    tournamentName: SwimStore.state.tournamentName,
-    sessionType: SwimStore.state.sessionType,
-    coachName: SwimStore.state.coachName,
-    heats: cleanHeatsData
-  };
-
-  const ind = document.getElementById('save-status-indicator');
-  ind.innerText = "☁️ Añadiendo a Outbox y sincronizando...";
-
-  // 3. Enviar el paquete ligero a Google
-  addToOutbox(payload).then(() => {
-    ind.innerText = "✓ Encolado y sincronizado con Google Sheets";
-    alert("Datos sincronizados con éxito utilizando la estrategia Offline-First Outbox.");
-  }).catch(err => {
-    console.error("Error al sincronizar con Outbox:", err);
-    ind.innerText = "⚠️ Error de sincronización";
-  });
+  syncWithCloudBidirectional();
 }
 
 function setupHeatSelectDeleteEvents() {
@@ -1076,7 +1245,7 @@ function clearLocalStorage() {
         const transaction = db.transaction(['sessions', 'outbox', 'photos'], 'readwrite');
         transaction.objectStore('sessions').clear();
         transaction.objectStore('outbox').clear();
-        transaction.objectStore('photos').clear(); // Vaciamos la bóveda
+        transaction.objectStore('photos').clear(); 
         transaction.oncomplete = () => {
           SwimStore.state.heatsData = { 1: createEmptyHeatState("Prueba 1", 2) };
           SwimStore.state.currentHeatId = 1;
@@ -1736,10 +1905,8 @@ function parseAndApplyRosterData(rawText) {
     SwimStore.state.activeLanes = maxLaneDetected + 1;
     const laneSelect = document.getElementById('input-lanes');
     
-    // Verificamos si la opción (ej. 7 carriles) ya existe en el menú
     let optionExists = Array.from(laneSelect.options).some(opt => parseInt(opt.value) === SwimStore.state.activeLanes);
     
-    // Si no existe, la creamos al vuelo
     if (!optionExists) {
       const newOpt = document.createElement('option');
       newOpt.value = SwimStore.state.activeLanes;
@@ -1768,15 +1935,11 @@ let touchStartX = 0;
 let touchStartY = 0;
 
 function addTouchEvents(el) {
-  // Seguro: Si ya tiene los eventos, abortamos para no duplicarlos
   if (el.dataset.touchBound === "true") return; 
-  
   el.addEventListener('touchstart', handleTouchStart, { passive: true });
   el.addEventListener('touchmove', handleTouchMove, { passive: false });
   el.addEventListener('touchend', handleTouchEnd, { passive: true });
   el.addEventListener('touchcancel', handleTouchCancel, { passive: true });
-  
-  // Marcamos el elemento como configurado
   el.dataset.touchBound = "true";
 }
 
