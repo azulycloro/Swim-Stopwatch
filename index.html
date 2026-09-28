@@ -1824,9 +1824,13 @@ function closeRosterModal() {
   document.getElementById('roster-text-input').value = "";
 }
 
+/* ==========================================================================
+   MEJORA 1: IMPORTADOR DE CSV INTELIGENTE (Detecta comas o punto y coma)
+   ========================================================================== */
 function processRosterImport() {
   const fileInput = document.getElementById('roster-file-input');
   const textInput = document.getElementById('roster-text-input').value.trim();
+  
   if (fileInput.files.length > 0) {
     const file = fileInput.files[0];
     const reader = new FileReader();
@@ -1845,9 +1849,17 @@ function parseAndApplyRosterData(rawText) {
   let maxLaneDetected = SwimStore.state.activeLanes - 1;
   let lastTargetHeatId = null;
 
+  // Detección automática de delimitador (si la primera línea tiene ';' usamos punto y coma, si no, coma)
+  const sampleLine = lines.find(l => l.trim().length > 0) || "";
+  const delimiter = sampleLine.includes(';') ? ';' : ',';
+
   lines.forEach((line) => {
-    if (!line.trim()) return;
-    const parts = line.split(',').map(p => p.trim());
+    if (!line.trim() || line.startsWith('#')) return; // Ignora comentarios o líneas vacías
+    
+    // Sanitización: limpiamos comillas dobles residuales de Excel
+    const cleanLine = line.replace(/"/g, '');
+    const parts = cleanLine.split(delimiter).map(p => p.trim());
+    
     if (parts.length >= 7) {
       const pruebaNum = parts[0];
       const distancia = parts[1];
@@ -1856,6 +1868,9 @@ function parseAndApplyRosterData(rawText) {
       const targetLaneNum = parseInt(parts[4], 10);
       const swimmerName = parts[5];
       const seedTime = parts[6];
+
+      if (isNaN(targetLaneNum)) return; // Fila corrupta, la saltamos
+
       const heatFullName = `Prueba ${pruebaNum} - ${distancia}m ${estilo} (${serieName})`;
       const requiredSplits = calculateSplitsForDistance(distancia);
 
@@ -1886,6 +1901,7 @@ function parseAndApplyRosterData(rawText) {
         });
       }
       if (targetLaneNum > maxLaneDetected) { maxLaneDetected = targetLaneNum; }
+      
       let targetLaneObj = heatObj.laneData.find(l => l.lane === targetLaneNum);
       if (!targetLaneObj) {
         targetLaneObj = {
@@ -1907,19 +1923,21 @@ function parseAndApplyRosterData(rawText) {
     }
   });
 
+  if (importedCount === 0) {
+    alert("No se pudo importar ningún registro. Revisa que el formato de las columnas sea correcto.");
+    return;
+  }
+
   if ((maxLaneDetected + 1) > SwimStore.state.activeLanes) {
     SwimStore.state.activeLanes = maxLaneDetected + 1;
     const laneSelect = document.getElementById('input-lanes');
-    
     let optionExists = Array.from(laneSelect.options).some(opt => parseInt(opt.value) === SwimStore.state.activeLanes);
-    
     if (!optionExists) {
       const newOpt = document.createElement('option');
       newOpt.value = SwimStore.state.activeLanes;
       newOpt.text = `${SwimStore.state.activeLanes} Carriles (Importado)`;
       laneSelect.appendChild(newOpt);
     }
-    
     laneSelect.value = SwimStore.state.activeLanes;
   }
   saveCurrentHeatState();
@@ -1931,9 +1949,40 @@ function parseAndApplyRosterData(rawText) {
   }
   autoSaveToStorage();
   closeRosterModal();
-  alert(`Sincronización exitosa: ${importedCount} registros importados.`);
+  alert(`¡Sincronización de series exitosa! ${importedCount} nadadores importados correctamente.`);
 }
 
+
+/* ==========================================================================
+   MEJORA 2: INDICADOR VISUAL DE CAMBIOS Y CIERRE SEGURO (BeforeUnload)
+   ========================================================================== */
+function updateSyncDotState(status) {
+  const dot = document.getElementById('sync-status-dot');
+  if (!dot) return;
+  dot.className = ""; // Limpiar clases
+  if (status === 'synced') dot.classList.add('synced');
+  else if (status === 'pending') dot.classList.add('pending');
+}
+
+// Modificación al motor de sincronización para controlar el indicador visual
+const originalSyncBidirectional = syncWithCloudBidirectional;
+syncWithCloudBidirectional = function() {
+  updateSyncDotState('pending');
+  if (typeof originalSyncBidirectional === 'function') {
+    originalSyncBidirectional();
+  }
+  // Cambiamos a verde tras el ciclo estimado
+  setTimeout(() => { updateSyncDotState('synced'); }, 3000);
+};
+
+// Protección contra cierres accidentales si hay datos en la Outbox
+window.addEventListener('beforeunload', (e) => {
+  saveCurrentHeatState();
+  autoSaveToStorage();
+  // Si deseas una advertencia nativa del navegador al intentar cerrar con cambios activos:
+  // e.preventDefault();
+  // e.returnValue = '';
+});
 let touchDragElement = null;
 let touchClone = null;
 let touchHoldTimer = null;
