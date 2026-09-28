@@ -413,6 +413,117 @@ const SwimStore = {
     cardIdCounter: 0,
     activeModalPhotoIndex: null
   }
+  function syncWithCloudBidirectional() {
+  if (!SwimStore.state.googleWebAppUrl || !navigator.onLine) return;
+
+  saveCurrentHeatState();
+  
+  const cleanHeatsData = {};
+  for (let hId in SwimStore.state.heatsData) {
+    cleanHeatsData[hId] = {
+      name: SwimStore.state.heatsData[hId].name,
+      laneData: SwimStore.state.heatsData[hId].laneData
+    };
+  }
+
+  const payload = {
+    tournamentName: SwimStore.state.tournamentName,
+    sessionType: SwimStore.state.sessionType,
+    coachName: SwimStore.state.coachName,
+    heats: cleanHeatsData
+  };
+
+  const ind = document.getElementById('save-status-indicator');
+  if (ind) ind.innerText = "☁️ Sincronización bidireccional en curso...";
+
+  fetch(SwimStore.state.googleWebAppUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify(payload)
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.result === "success" && data.rows) {
+      processCloudRows(data.rows);
+      if (ind) ind.innerText = "✓ Sincronización automática OK";
+    }
+  })
+  .catch(err => {
+    console.warn("Error en sync bidireccional automática:", err);
+    if (ind) ind.innerText = "⚠️ Modo Offline (Guardado local)";
+  });
+}
+
+// Función auxiliar que procesa y funde los datos que vienen de la nube sin pisar datos locales activos
+function processCloudRows(rows) {
+  let dataChanged = false;
+
+  rows.forEach(row => {
+    const tName = row[1];
+    const heatName = row[4];
+    const laneNum = parseInt(row[5], 10);
+    const swimmerName = row[6];
+    const officialTime = row[7];
+    const splitsText = row[8];
+
+    if (tName === SwimStore.state.tournamentName) {
+      let targetHeatId = null;
+
+      for (let hId in SwimStore.state.heatsData) {
+        if (SwimStore.state.heatsData[hId].name.toLowerCase() === heatName.toLowerCase()) {
+          targetHeatId = hId;
+          break;
+        }
+      }
+
+      if (!targetHeatId) {
+        SwimStore.state.totalHeatsCount++;
+        targetHeatId = SwimStore.state.totalHeatsCount;
+        SwimStore.state.heatsData[targetHeatId] = createEmptyHeatState(heatName, 4);
+        dataChanged = true;
+      }
+
+      const heatObj = SwimStore.state.heatsData[targetHeatId];
+      
+      while (heatObj.laneData.length <= laneNum) {
+        heatObj.laneData.push({ lane: heatObj.laneData.length, swimmerName: "", seedTime: "", splits: Array(heatObj.activeSplits || 4).fill(null), officialTime: "" });
+      }
+
+      let targetLaneObj = heatObj.laneData.find(l => l.lane === laneNum);
+      if (targetLaneObj) {
+        // Fusión inteligente: Si el dato local está vacío pero la nube trae información del otro entrenador, la adoptamos
+        if (swimmerName && swimmerName !== `Carril ${laneNum}` && !targetLaneObj.swimmerName) {
+          targetLaneObj.swimmerName = swimmerName;
+          dataChanged = true;
+        }
+        if (officialTime && officialTime !== "N/A" && !targetLaneObj.officialTime) {
+          targetLaneObj.officialTime = officialTime;
+          dataChanged = true;
+        }
+
+        if (splitsText) {
+          const splitStrings = splitsText.split(',').map(s => s.trim());
+          splitStrings.forEach((sStr, sIdx) => {
+            if (sStr && (!targetLaneObj.splits[sIdx] || targetLaneObj.splits[sIdx].totalMs === null)) {
+              const ms = parseTimeToMs(sStr);
+              if (!isNaN(ms) && ms > 0) {
+                SwimStore.state.cardIdCounter++;
+                targetLaneObj.splits[sIdx] = { totalMs: ms, cardId: `card-${SwimStore.state.cardIdCounter}` };
+                dataChanged = true;
+              }
+            }
+          });
+        }
+      }
+    }
+  });
+
+  // Si la nube trajo datos nuevos de otros entrenadores, refrescamos la pantalla suavemente
+  if (dataChanged) {
+    loadHeatState(SwimStore.state.currentHeatId);
+    autoSaveToStorage();
+  }
+}
 };
 
 const workerCode = `
