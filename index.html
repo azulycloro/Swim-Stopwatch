@@ -1740,16 +1740,22 @@ function parseAndApplyRosterData(rawText) {
     }
   });
 
-  if ((maxLaneDetected + 1) > activeLanes) {
+if ((maxLaneDetected + 1) > activeLanes) {
     activeLanes = maxLaneDetected + 1;
-    document.getElementById('input-lanes').value = activeLanes;
-  }
-  saveCurrentHeatState();
-  renderHeatSelectOptions();
-  if (lastTargetHeatId) {
-    currentHeatId = parseInt(lastTargetHeatId);
-    document.getElementById('heat-select').value = currentHeatId;
-    loadHeatState(currentHeatId);
+    const laneSelect = document.getElementById('input-lanes');
+    
+    // Verificamos si la opción (ej. 7 carriles) ya existe en el menú
+    let optionExists = Array.from(laneSelect.options).some(opt => parseInt(opt.value) === activeLanes);
+    
+    // Si no existe, la creamos al vuelo
+    if (!optionExists) {
+      const newOpt = document.createElement('option');
+      newOpt.value = activeLanes;
+      newOpt.text = `${activeLanes} Carriles (Importado)`;
+      laneSelect.appendChild(newOpt);
+    }
+    
+    laneSelect.value = activeLanes;
   }
   autoSaveToStorage();
   closeRosterModal();
