@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Swim Stopwatch - Entrenadores Pro v4.0 (PWA)</title>
+<title>Swim Stopwatch - Entrenadores Pro v4.1 (PWA Avanzada)</title>
 <!-- Enlace al Manifest para instalación PWA -->
 <link rel="manifest" href="manifest.json">
 <style>
@@ -328,7 +328,7 @@ body { display: flex; height: 100vh; background-color: #f0f4f8; overflow: hidden
 <div class="modal" id="roster-modal">
   <div class="modal-content">
     <h3>Sincronizar Series y Nadadores</h3>
-    <p style="font-size: 11px; color: #555;">Importa un archivo CSV o pega los datos en el formato:<br><b>[Prueba], [Distancia], [Estilo], [Serie], [Carril], [Nombre], [Tiempo Sembrado]</b><br><span style="color:#2e7d32; font-weight:bold;">Ejemplo: 12, 200, Mariposa, Serie 5, 8, Juan Perez, 2:16.20</span></p>
+    <p style="font-size: 11px; color: #555;">Importa un archivo CSV o pega los datos en el formato:<br><b>[Prueba], [Distancia], [Estilo], [Serie], [Carril], [Nombre], [Tiempo Sembrado]</b></p>
     <div class="form-group">
       <label>1. Cargar archivo CSV / TXT:</label>
       <input type="file" id="roster-file-input" accept=".csv, .txt">
@@ -417,14 +417,20 @@ const SwimStore = {
     coachName: "Juan Albarracin",
     googleWebAppUrl: "",
     cardIdCounter: 0,
-    activeModalPhotoIndex: null
+    activeModalPhotoIndex: null,
+    hasUnsyncedChanges: false
   }
 };
 
 /* ==========================================================================
-   SINCRONIZACIÓN BIDIRECCIONAL AUTOMÁTICA (TWO-WAY SYNC)
+   SINCRONIZACIÓN BIDIRECCIONAL AUTOMÁTICA Y ESTADO PENDIENTE
    ========================================================================== */
-function syncWithCloudBidirectional() {
+function normalizeText(text) {
+  if (!text) return "";
+  return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+}
+
+let originalSyncBidirectional = function syncWithCloudBidirectional() {
   if (!SwimStore.state.googleWebAppUrl || !navigator.onLine) return;
 
   saveCurrentHeatState();
@@ -445,7 +451,7 @@ function syncWithCloudBidirectional() {
   };
 
   const ind = document.getElementById('save-status-indicator');
-  if (ind) ind.innerText = "☁️ Sincronización bidireccional en curso...";
+  if (ind) ind.innerText = "☁️ Sincronizando con Google Sheets...";
 
   fetch(SwimStore.state.googleWebAppUrl, {
     method: 'POST',
@@ -455,20 +461,29 @@ function syncWithCloudBidirectional() {
   .then(response => response.json())
   .then(data => {
     if (data.result === "success" && data.rows) {
-      (data.rows);
-      if (ind) ind.innerText = "✓ Sincronización automática OK";
+      processCloudRows(data.rows);
+      SwimStore.state.hasUnsyncedChanges = false;
+      if (ind) ind.innerText = "✓ Sincronizado OK";
     }
   })
   .catch(err => {
-    console.warn("Error en sync bidireccional automática:", err);
-    if (ind) ind.innerText = "⚠️ Modo Offline (Guardado local)";
+    console.warn("Error en sync bidireccional:", err);
+    if (ind) ind.innerText = "⚠️ Modo Offline (Cambios pendientes)";
   });
+};
+
+function syncWithCloudBidirectional() {
+  updateSyncDotState('pending');
+  originalSyncBidirectional();
+  setTimeout(() => { updateSyncDotState('synced'); }, 3000);
 }
 
-// Función auxiliar para normalizar textos (quita tildes y pasa a minúsculas)
-function normalizeText(text) {
-  if (!text) return "";
-  return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+function updateSyncDotState(status) {
+  const dot = document.getElementById('sync-status-dot');
+  if (!dot) return;
+  dot.className = ""; 
+  if (status === 'synced') dot.classList.add('synced');
+  else if (status === 'pending') dot.classList.add('pending');
 }
 
 function processCloudRows(rows) {
@@ -480,7 +495,8 @@ function processCloudRows(rows) {
     const heatName = row[4];
     const laneNum = parseInt(row[5], 10);
     const swimmerName = row[6];
-    const officialTime = row[7];
+    // No usamos el officialTime proveniente de la nube para rellenar la caja local.
+    // Garantizamos que la caja amarilla sea EXCLUSIVAMENTE de digitación manual y local.
     const splitsText = row[8];
 
     if (normalizeText(tName) === localTournament) {
@@ -508,28 +524,20 @@ function processCloudRows(rows) {
 
       let targetLaneObj = heatObj.laneData.find(l => l.lane === laneNum);
       if (targetLaneObj) {
-        // 1. Fusión de nombres
+        // Fusión de nombres
         if (swimmerName && swimmerName !== `Carril ${laneNum}` && (!targetLaneObj.swimmerName || targetLaneObj.swimmerName === "")) {
           targetLaneObj.swimmerName = swimmerName;
           dataChanged = true;
         }
 
-        // 2. Extraer el último split de la cadena de texto de la nube para validación
-        let lastSplitTime = "";
-        if (splitsText) {
-          const splitStrings = splitsText.split(',').map(s => s.trim());
-          const lastSplitStr = splitStrings[splitStrings.length - 1];
-          if (lastSplitStr) {
-            lastSplitTime = lastSplitStr.split(' ')[0]; // Quita el (+00:00.00)
-          }
-        }
-
-        // 3. Importar los splits a la interfaz
+        // Fusión de Splits (Parciales)
         if (splitsText) {
           const splitStrings = splitsText.split(',').map(s => s.trim());
           splitStrings.forEach((sStr, sIdx) => {
             if (sStr !== "") {
-              const ms = parseTimeToMs(sStr);
+              // Limpiamos los paréntesis (ej. "01:05.20 (+01:05.20)") antes de pasarlo al lector
+              const cleanStr = sStr.split(' ')[0];
+              const ms = parseTimeToMs(cleanStr);
               if (!isNaN(ms) && ms > 0) {
                 if (!targetLaneObj.splits[sIdx] || targetLaneObj.splits[sIdx].totalMs === null) {
                   SwimStore.state.cardIdCounter++;
@@ -540,13 +548,6 @@ function processCloudRows(rows) {
             }
           });
         }
-
-        // 4. Fusión de Tiempo Oficial SOLO si es distinto al último split
-        // Esto evita rellenar la caja manual si el servidor autocompletó la columna H con el tiempo total
-        if (officialTime && officialTime !== "N/A" && officialTime !== lastSplitTime && (!targetLaneObj.officialTime || targetLaneObj.officialTime === "")) {
-          targetLaneObj.officialTime = officialTime;
-          dataChanged = true;
-        }
       }
     }
   });
@@ -556,6 +557,7 @@ function processCloudRows(rows) {
     autoSaveToStorage();
   }
 }
+
 const workerCode = `
 let timer = null;
 self.onmessage = function(e) {
@@ -943,6 +945,11 @@ async function initApp() {
     handleBigButtonClick();
   });
 
+  window.addEventListener('beforeunload', (e) => {
+    saveCurrentHeatState();
+    autoSaveToStorage();
+  });
+
   document.addEventListener("visibilitychange", function() {
     if (document.hidden) { autoSaveToStorage(); }
   });
@@ -951,7 +958,6 @@ async function initApp() {
     if (h && h.isRunning) { autoSaveToStorage(); }
   }, 15000);
 
-  // Sincronización bidireccional automática con la nube cada 30 segundos
   setInterval(() => {
     syncWithCloudBidirectional();
   }, 30000);
@@ -1244,6 +1250,8 @@ function deleteCurrentHeat() {
 
 function autoSaveToStorage() {
   saveCurrentHeatState();
+  SwimStore.state.hasUnsyncedChanges = true;
+  
   const stateToSave = {
     tournamentName: SwimStore.state.tournamentName,
     sessionType: SwimStore.state.sessionType,
@@ -1259,8 +1267,7 @@ function autoSaveToStorage() {
   saveStateToIDB(stateToSave).then(() => {
     const ind = document.getElementById('save-status-indicator');
     if (ind && !ind.innerText.includes("☁️")) {
-      ind.innerText = "✓ Guardado local IndexedDB (OK)";
-      setTimeout(() => { if (!ind.innerText.includes("☁️")) ind.innerText = "✓ Sincronización Offline-First activa"; }, 2000);
+      ind.innerText = "✓ Guardado local (Cambios pendientes de nube)";
     }
   }).catch(err => {
     console.warn("Fallo al guardar en IndexedDB:", err);
@@ -1758,7 +1765,7 @@ function updateLaneHeaderColor(laneNum) {
   };
 
   const seedStr = laneObj.seedTime ? laneObj.seedTime.trim() : "";
-  const seedMs = seedStr ? (seedStr) : NaN;
+  const seedMs = seedStr ? parseTimeToMs(seedStr) : NaN;
   const totalSplitsConfigured = h.activeSplits || 4;
 
   let lastPlacedIndex = -1;
@@ -1791,7 +1798,7 @@ function updateLaneHeaderColor(laneNum) {
   }
 
   if (laneObj.officialTime && laneObj.officialTime.trim() !== "") {
-    const officialMs = (laneObj.officialTime);
+    const officialMs = parseTimeToMs(laneObj.officialTime);
     if (!isNaN(officialMs) && officialMs > 0) {
       computedMsForColor = officialMs;
     }
@@ -1847,9 +1854,6 @@ function closeRosterModal() {
   document.getElementById('roster-text-input').value = "";
 }
 
-/* ==========================================================================
-   MEJORA 1: IMPORTADOR DE CSV INTELIGENTE (Detecta comas o punto y coma)
-   ========================================================================== */
 function processRosterImport() {
   const fileInput = document.getElementById('roster-file-input');
   const textInput = document.getElementById('roster-text-input').value.trim();
@@ -1872,14 +1876,12 @@ function parseAndApplyRosterData(rawText) {
   let maxLaneDetected = SwimStore.state.activeLanes - 1;
   let lastTargetHeatId = null;
 
-  // Detección automática de delimitador (si la primera línea tiene ';' usamos punto y coma, si no, coma)
   const sampleLine = lines.find(l => l.trim().length > 0) || "";
   const delimiter = sampleLine.includes(';') ? ';' : ',';
 
   lines.forEach((line) => {
-    if (!line.trim() || line.startsWith('#')) return; // Ignora comentarios o líneas vacías
+    if (!line.trim() || line.startsWith('#')) return; 
     
-    // Sanitización: limpiamos comillas dobles residuales de Excel
     const cleanLine = line.replace(/"/g, '');
     const parts = cleanLine.split(delimiter).map(p => p.trim());
     
@@ -1892,7 +1894,7 @@ function parseAndApplyRosterData(rawText) {
       const swimmerName = parts[5];
       const seedTime = parts[6];
 
-      if (isNaN(targetLaneNum)) return; // Fila corrupta, la saltamos
+      if (isNaN(targetLaneNum)) return; 
 
       const heatFullName = `Prueba ${pruebaNum} - ${distancia}m ${estilo} (${serieName})`;
       const requiredSplits = calculateSplitsForDistance(distancia);
@@ -1977,35 +1979,71 @@ function parseAndApplyRosterData(rawText) {
 
 
 /* ==========================================================================
-   MEJORA 2: INDICADOR VISUAL DE CAMBIOS Y CIERRE SEGURO (BeforeUnload)
+   LÓGICA INTELIGENTE DE AJUSTE A TIEMPO OFICIAL
    ========================================================================== */
+function adjustSplitsToOfficial(laneNum) {
+  const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
+  if (!h) return;
+  
+  const laneObj = h.laneData.find(l => l.lane === laneNum);
+  if (!laneObj || !laneObj.officialTime) return;
+
+  const officialMs = parseTimeToMs(laneObj.officialTime);
+  if (isNaN(officialMs) || officialMs <= 0) return;
+
+  let lastValidIdx = -1;
+  for (let i = laneObj.splits.length - 1; i >= 0; i--) {
+    if (laneObj.splits[i] && laneObj.splits[i].totalMs !== null) {
+      lastValidIdx = i;
+      break;
+    }
+  }
+
+  const lastSplitIndex = h.activeSplits - 1;
+
+  if (lastValidIdx === -1) {
+    // Caso 1: El carril estaba vacío y no había ningún split.
+    // Creamos el tiempo oficial directamente en la última celda de split de la carrera.
+    SwimStore.state.cardIdCounter++;
+    laneObj.splits[lastSplitIndex] = { totalMs: officialMs, cardId: `card-${SwimStore.state.cardIdCounter}` };
+  } 
+  else if (lastValidIdx < lastSplitIndex) {
+    // Caso 2: Tomaste splits pero te faltaron los del final.
+    // Mantenemos los que ya habías tomado y ponemos el oficial cerrando la carrera.
+    SwimStore.state.cardIdCounter++;
+    laneObj.splits[lastSplitIndex] = { totalMs: officialMs, cardId: `card-${SwimStore.state.cardIdCounter}` };
+  } 
+  else {
+    // Caso 3: Tomaste todos los splits pero quieres ajustar el último a la placa oficial.
+    // Se ajustan todos proporcionalmente.
+    const recordedTotalMs = laneObj.splits[lastValidIdx].totalMs;
+    if (recordedTotalMs > 0) {
+      const ratio = officialMs / recordedTotalMs;
+      for (let i = 0; i <= lastValidIdx; i++) {
+        laneObj.splits[i].totalMs = Math.round(laneObj.splits[i].totalMs * ratio);
+      }
+    }
+  }
+
+  // Refrescamos visualmente los cuadros para mostrar el nuevo tiempo total y splits
+  recalculateLaneByNumber(laneNum);
+  updateLaneHeaderColor(laneNum);
+  autoSaveToStorage();
+}
+
 function updateSyncDotState(status) {
   const dot = document.getElementById('sync-status-dot');
   if (!dot) return;
-  dot.className = ""; // Limpiar clases
+  dot.className = ""; 
   if (status === 'synced') dot.classList.add('synced');
   else if (status === 'pending') dot.classList.add('pending');
 }
 
-// Modificación al motor de sincronización para controlar el indicador visual
-const originalSyncBidirectional = syncWithCloudBidirectional;
-syncWithCloudBidirectional = function() {
-  updateSyncDotState('pending');
-  if (typeof originalSyncBidirectional === 'function') {
-    originalSyncBidirectional();
-  }
-  // Cambiamos a verde tras el ciclo estimado
-  setTimeout(() => { updateSyncDotState('synced'); }, 3000);
-};
-
-// Protección contra cierres accidentales si hay datos en la Outbox
 window.addEventListener('beforeunload', (e) => {
   saveCurrentHeatState();
   autoSaveToStorage();
-  // Si deseas una advertencia nativa del navegador al intentar cerrar con cambios activos:
-  // e.preventDefault();
-  // e.returnValue = '';
 });
+
 let touchDragElement = null;
 let touchClone = null;
 let touchHoldTimer = null;
@@ -2324,38 +2362,6 @@ function recalculateLaneByNumber(laneNum) {
   updateLaneHeaderColor(laneNum);
 }
 
-function adjustSplitsToOfficial(laneNum) {
-  const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
-  if (!h) return;
-  
-  const laneObj = h.laneData.find(l => l.lane === laneNum);
-  if (!laneObj || !laneObj.officialTime) return;
-
-  const officialMs = (laneObj.officialTime);
-  if (isNaN(officialMs) || officialMs <= 0) return;
-
-  let lastValidIdx = -1;
-  for (let i = laneObj.splits.length - 1; i >= 0; i--) {
-    if (laneObj.splits[i] && laneObj.splits[i].totalMs !== null) {
-      lastValidIdx = i;
-      break;
-    }
-  }
-
-  if (lastValidIdx === -1) return; 
-
-  const recordedTotalMs = laneObj.splits[lastValidIdx].totalMs;
-  if (recordedTotalMs <= 0) return;
-
-  const ratio = officialMs / recordedTotalMs;
-
-  for (let i = 0; i <= lastValidIdx; i++) {
-    laneObj.splits[i].totalMs = Math.round(laneObj.splits[i].totalMs * ratio);
-  }
-
-  recalculateLaneByNumber(laneNum);
-}
-
 function handleBigButtonClick() {
   const now = performance.now();
   if (now - lastBigButtonPressTime < 40) return;
@@ -2449,9 +2455,7 @@ function formatTime(ms) {
 
 function parseTimeToMs(timeStr) {
   if (!timeStr) return NaN;
-  
-  // MEJORA: Ignorar los paréntesis de los laps que vienen de Google Sheets
-  // Convierte "00:09.63 (+00:09.63)" en solo "00:09.63" para que la app lo lea bien
+  // Eliminamos cualquier dato que venga entre paréntesis (ej. lap importado) para evitar que la conversión matemática se quiebre
   timeStr = timeStr.trim().split(' ')[0]; 
   
   let parts = timeStr.split(':');
