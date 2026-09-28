@@ -955,16 +955,29 @@ function syncToGoogleSheet() {
     return;
   }
   saveCurrentHeatState();
+  
+  // 1. Crear una copia limpia y ligera de los datos, excluyendo las fotografías
+  const cleanHeatsData = {};
+  for (let hId in heatsData) {
+    cleanHeatsData[hId] = {
+      name: heatsData[hId].name,
+      laneData: heatsData[hId].laneData
+      // Omitimos intencionalmente 'attachedPhotos' para evitar saturar la red
+    };
+  }
+
+  // 2. Empaquetar solo el texto
   const payload = {
     tournamentName: tournamentName,
     sessionType: sessionType,
     coachName: coachName,
-    heats: heatsData
+    heats: cleanHeatsData
   };
 
   const ind = document.getElementById('save-status-indicator');
   ind.innerText = "☁️ Añadiendo a Outbox y sincronizando...";
 
+  // 3. Enviar el paquete ligero a Google
   addToOutbox(payload).then(() => {
     ind.innerText = "✓ Encolado y sincronizado con Google Sheets";
     alert("Datos sincronizados con éxito utilizando la estrategia Offline-First Outbox.");
@@ -973,7 +986,6 @@ function syncToGoogleSheet() {
     ind.innerText = "⚠️ Error de sincronización";
   });
 }
-
 function setupHeatSelectDeleteEvents() {
   const selectEl = document.getElementById('heat-select');
   let pressTimer = null;
