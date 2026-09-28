@@ -476,6 +476,7 @@ function processCloudRows(rows) {
     const officialTime = row[7];
     const splitsText = row[8];
 
+    // Validar que pertenezca al torneo actual
     if (tName === SwimStore.state.tournamentName) {
       let targetHeatId = null;
 
@@ -486,6 +487,7 @@ function processCloudRows(rows) {
         }
       }
 
+      // Si la prueba no existe localmente, la creamos
       if (!targetHeatId) {
         SwimStore.state.totalHeatsCount++;
         targetHeatId = SwimStore.state.totalHeatsCount;
@@ -495,30 +497,44 @@ function processCloudRows(rows) {
 
       const heatObj = SwimStore.state.heatsData[targetHeatId];
       
+      // Asegurar que el arreglo tenga espacio para este carril
       while (heatObj.laneData.length <= laneNum) {
-        heatObj.laneData.push({ lane: heatObj.laneData.length, swimmerName: "", seedTime: "", splits: Array(heatObj.activeSplits || 4).fill(null), officialTime: "" });
+        heatObj.laneData.push({ 
+          lane: heatObj.laneData.length, 
+          swimmerName: "", 
+          seedTime: "", 
+          splits: Array(heatObj.activeSplits || 4).fill(null), 
+          officialTime: "" 
+        });
       }
 
       let targetLaneObj = heatObj.laneData.find(l => l.lane === laneNum);
       if (targetLaneObj) {
-        if (swimmerName && swimmerName !== `Carril ${laneNum}` && !targetLaneObj.swimmerName) {
+        // Fusión inteligente de nombre de nadador
+        if (swimmerName && swimmerName !== `Carril ${laneNum}` && (!targetLaneObj.swimmerName || targetLaneObj.swimmerName === "")) {
           targetLaneObj.swimmerName = swimmerName;
           dataChanged = true;
         }
-        if (officialTime && officialTime !== "N/A" && !targetLaneObj.officialTime) {
+
+        // Fusión inteligente de tiempo oficial
+        if (officialTime && officialTime !== "N/A" && (!targetLaneObj.officialTime || targetLaneObj.officialTime === "")) {
           targetLaneObj.officialTime = officialTime;
           dataChanged = true;
         }
 
+        // Fusión inteligente de splits (parciales)
         if (splitsText) {
           const splitStrings = splitsText.split(',').map(s => s.trim());
           splitStrings.forEach((sStr, sIdx) => {
-            if (sStr && (!targetLaneObj.splits[sIdx] || targetLaneObj.splits[sIdx].totalMs === null)) {
+            if (sStr !== "") {
               const ms = parseTimeToMs(sStr);
               if (!isNaN(ms) && ms > 0) {
-                SwimStore.state.cardIdCounter++;
-                targetLaneObj.splits[sIdx] = { totalMs: ms, cardId: `card-${SwimStore.state.cardIdCounter}` };
-                dataChanged = true;
+                // Si la celda local está vacía, adoptamos el tiempo del otro entrenador
+                if (!targetLaneObj.splits[sIdx] || targetLaneObj.splits[sIdx].totalMs === null) {
+                  SwimStore.state.cardIdCounter++;
+                  targetLaneObj.splits[sIdx] = { totalMs: ms, cardId: `card-${SwimStore.state.cardIdCounter}` };
+                  dataChanged = true;
+                }
               }
             }
           });
@@ -527,12 +543,12 @@ function processCloudRows(rows) {
     }
   });
 
+  // Si la nube aportó datos nuevos de otro entrenador, refrescamos la pantalla en tiempo real
   if (dataChanged) {
     loadHeatState(SwimStore.state.currentHeatId);
     autoSaveToStorage();
   }
 }
-
 const workerCode = `
 let timer = null;
 self.onmessage = function(e) {
