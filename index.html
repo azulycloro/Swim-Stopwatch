@@ -246,7 +246,7 @@ body { display: flex; height: 100vh; background-color: #f0f4f8; overflow: hidden
     </div>
     <div class="footer-meta-item">
       <span>Torneo / Sesión:</span>
-      <strong id="tournament-meta-display">Copa_Nal_Eliminatorias</strong>
+      <strong id="tournament-meta-display">Torneo</strong>
     </div>
     <div class="footer-meta-item">
       <span>App:</span>
@@ -412,8 +412,8 @@ const SwimStore = {
     currentHeatId: 1,
     totalHeatsCount: 1,
     activeLanes: 6,
-    tournamentName: "Copa_Nal_Interclubes",
-    sessionType: "Eliminatorias",
+    tournamentName: "Torneo",
+    sessionType: "Finales",
     coachName: "Juan Albarracin",
     googleWebAppUrl: "",
     cardIdCounter: 0,
@@ -1289,7 +1289,7 @@ function clearLocalStorage() {
           // 2. Limpiar los metadatos adicionales solicitados
           SwimStore.state.tournamentName = "";
           SwimStore.state.coachName = "";
-          // Mantenemos "Eliminatorias" por defecto ya que el <select> de HTML no tiene una opción en blanco.
+          // Mantenemos "Finales" por defecto ya que el <select> de HTML no tiene una opción en blanco.
           SwimStore.state.sessionType = "Finales"; 
           SwimStore.state.googleWebAppUrl = "";
           
