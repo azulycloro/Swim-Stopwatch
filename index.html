@@ -966,10 +966,10 @@ async function initApp() {
       SwimStore.state.currentHeatId = savedState.currentHeatId || 1;
       SwimStore.state.totalHeatsCount = savedState.totalHeatsCount || 1;
       SwimStore.state.activeLanes = savedState.activeLanes || 6;
-      SwimStore.state.tournamentName = savedState.tournamentName || "Copa_Nal_Interclubes";
-      SwimStore.state.sessionType = savedState.sessionType || "Eliminatorias";
+      SwimStore.state.tournamentName = savedState.tournamentName || "Torneo";
+      SwimStore.state.sessionType = savedState.sessionType || "Finales";
       SwimStore.state.coachName = savedState.coachName || "Juan Albarracin";
-      SwimStore.state.googleWebAppUrl = savedState.googleWebAppUrl || "";
+      SwimStore.state.googleWebAppUrl = savedState.googleWebAppUrl || "https://script.google.com/macros/s/AKfycbxr8CjRjPWQPQ7A96FJg7lIGDdAu0BVi3hLq5VPg36dwqMoIgDFg3S1PiAuMN3MS6NQvA/exec";
       SwimStore.state.cardIdCounter = savedState.cardIdCounter || 0;
       
       for (let hId in SwimStore.state.heatsData) {
@@ -1176,8 +1176,8 @@ function importSessionJSON(event) {
         SwimStore.state.currentHeatId = parsed.currentHeatId;
         SwimStore.state.totalHeatsCount = parsed.totalHeatsCount || Object.keys(SwimStore.state.heatsData).length;
         SwimStore.state.activeLanes = parsed.activeLanes || 6;
-        SwimStore.state.tournamentName = parsed.tournamentName || "Copa_Nal_Interclubes";
-        SwimStore.state.sessionType = parsed.sessionType || "Eliminatorias";
+        SwimStore.state.tournamentName = parsed.tournamentName || "Torneo";
+        SwimStore.state.sessionType = parsed.sessionType || "Finales";
         SwimStore.state.coachName = parsed.coachName || "Juan Albarracin";
         SwimStore.state.cardIdCounter = parsed.cardIdCounter || 0;
         
@@ -1279,12 +1279,42 @@ function clearLocalStorage() {
         transaction.objectStore('sessions').clear();
         transaction.objectStore('outbox').clear();
         transaction.objectStore('photos').clear(); 
+        
         transaction.oncomplete = () => {
+          // 1. Restablecer los datos estructurales de las series
           SwimStore.state.heatsData = { 1: createEmptyHeatState("Prueba 1", 2) };
           SwimStore.state.currentHeatId = 1;
           SwimStore.state.totalHeatsCount = 1;
-          location.reload();
+          
+          // 2. Limpiar los metadatos adicionales solicitados
+          SwimStore.state.tournamentName = "";
+          SwimStore.state.coachName = "";
+          // Mantenemos "Eliminatorias" por defecto ya que el <select> de HTML no tiene una opción en blanco.
+          SwimStore.state.sessionType = "Eliminatorias"; 
+          SwimStore.state.googleWebAppUrl = "";
+          
+          // 3. Crear el objeto de estado limpio para sobrescribir los defaults hardcodeados
+          const cleanState = {
+            tournamentName: SwimStore.state.tournamentName,
+            sessionType: SwimStore.state.sessionType,
+            coachName: SwimStore.state.coachName,
+            googleWebAppUrl: SwimStore.state.googleWebAppUrl,
+            heatsData: SwimStore.state.heatsData,
+            currentHeatId: SwimStore.state.currentHeatId,
+            totalHeatsCount: SwimStore.state.totalHeatsCount,
+            activeLanes: SwimStore.state.activeLanes, // Conserva la configuración de carriles
+            cardIdCounter: 0
+          };
+          
+          // 4. Guardar en IndexedDB y recargar solo después de confirmar la escritura
+          saveStateToIDB(cleanState).then(() => {
+            location.reload();
+          }).catch((e) => {
+            console.error("Error guardando el estado limpio, recargando de todos modos:", e);
+            location.reload();
+          });
         };
+        
         transaction.onerror = (e) => {
           console.error("Error en transacción al limpiar IndexedDB:", e);
           location.reload();
@@ -1298,7 +1328,6 @@ function clearLocalStorage() {
     }
   }
 }
-
 function calculateSplitsForDistance(distance) {
   const distNum = parseInt(distance, 10);
   if (distNum === 50) return 1;
