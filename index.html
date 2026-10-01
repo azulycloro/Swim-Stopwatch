@@ -948,7 +948,9 @@ async function initApp() {
     handleBigButtonClick();
   });
 
-  window.addEventListener('beforeunload', (e) => {
+window.addEventListener('beforeunload', (e) => {
+    // Si estamos limpiando datos, cancelamos el autoguardado para evitar reescribir datos sucios
+    if (window.isClearingData) return; 
     saveCurrentHeatState();
     autoSaveToStorage();
   });
