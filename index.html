@@ -707,12 +707,11 @@ function processOutbox() {
     const item = items[0];
     fetch(SwimStore.state.googleWebAppUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'text/plain' }, // Eliminado mode: 'no-cors'
+      headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify(item.payload)
     })
-    .then(response => response.json()) // Validamos la respuesta real del servidor
+    .then(response => response.json()) 
     .then(data => {
-      // Solo borramos el dato de la cola local si Google confirma el éxito
       if (data.result === "success") {
         const delTx = db.transaction(['outbox'], 'readwrite');
         const delStore = delTx.objectStore('outbox');
@@ -720,7 +719,7 @@ function processOutbox() {
         delTx.oncomplete = () => {
           const ind = document.getElementById('save-status-indicator');
           if (ind) ind.innerText = "✓ Sincronizado con la nube (Outbox OK)";
-          processOutbox(); // Procesar el siguiente en la cola
+          processOutbox(); 
         };
       }
     }).catch(err => {
@@ -1004,6 +1003,13 @@ async function initApp() {
       for (let hId in SwimStore.state.heatsData) {
         if (!SwimStore.state.heatsData[hId].hiddenLanes) SwimStore.state.heatsData[hId].hiddenLanes = [];
         if (!SwimStore.state.heatsData[hId].attachedPhotos) SwimStore.state.heatsData[hId].attachedPhotos = [];
+        
+        // Migración para respaldos JSON antiguos: Sanea y añade marcaMinima si no existía
+        SwimStore.state.heatsData[hId].laneData.forEach(lane => {
+          if (typeof lane.marcaMinima === "undefined") {
+            lane.marcaMinima = "";
+          }
+        });
       }
 
       if (Object.keys(SwimStore.state.heatsData).length === 0) {
@@ -1227,6 +1233,13 @@ function importSessionJSON(event) {
         for (let hId in SwimStore.state.heatsData) {
           if (!SwimStore.state.heatsData[hId].hiddenLanes) SwimStore.state.heatsData[hId].hiddenLanes = [];
           if (!SwimStore.state.heatsData[hId].attachedPhotos) SwimStore.state.heatsData[hId].attachedPhotos = [];
+          
+          // Migración para respaldos JSON antiguos: Sanea y añade marcaMinima si no existía
+          SwimStore.state.heatsData[hId].laneData.forEach(lane => {
+            if (typeof lane.marcaMinima === "undefined") {
+              lane.marcaMinima = "";
+            }
+          });
         }
 
         document.getElementById('input-lanes').value = SwimStore.state.activeLanes;
@@ -2624,9 +2637,14 @@ imageModalBox.addEventListener('mousedown', (e) => {
   }
 });
 
-window.addEventListener('mouseup', () => { imgPanning = false; });
+// Corrección de Fuga de Memoria
+window.addEventListener('mouseup', () => { 
+  imgPanning = false; 
+});
+
 window.addEventListener('mousemove', (e) => {
-  if (!imgPanning || imgScale <= 1) return;
+  // Validación de seguridad para que solo trabaje cuando el modal esté abierto
+  if (!imgPanning || imgScale <= 1 || !document.getElementById('image-modal').classList.contains('open')) return;
   e.preventDefault();
   imgPointX = (e.clientX - imgStart.x);
   imgPointY = (e.clientY - imgStart.y);
