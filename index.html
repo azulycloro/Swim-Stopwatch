@@ -292,16 +292,12 @@ body { display: flex; height: 100vh; background-color: #f0f4f8; overflow: hidden
 </div>
 
 <div class="modal" id="file-options-modal">
-  <div class="modal-content" style="width: 380px;">
-    <h3>Gestión</h3>
+  <div class="modal-content" style="width: 340px;">
+    <h3>Gestión de Competencia</h3>
     <div class="file-options-grid">
-      <button class="file-option-btn" onclick="closeFileModal(); openTournamentManagerModal();" style="color: #c2185b; border-color: #f8bbd0;">🏆 Nuevo Torneo / Sesión</button>
-      <button class="file-option-btn" onclick="closeFileModal(); openRosterModal();" style="color: #0288d1; border-color: #b3e5fc;">📥 Cargar Series</button>
-      <button class="file-option-btn" onclick="closeFileModal(); exportSessionJSON();" style="color: #6a1b9a; border-color: #e1bee7;">💾 Guardar Sesión local</button>
-      <button class="file-option-btn" onclick="closeFileModal(); triggerImportSession();" style="color: #2e7d32; border-color: #c8e6c9;">📂 Cargar Sesión local</button>
-      <button class="file-option-btn" onclick="closeFileModal(); syncToGoogleSheet();" style="color: #e65100; border-color: #ffe0b2;">☁️ Sincronizar con Google Sheets</button>
-      <button class="file-option-btn" onclick="closeFileModal(); openSettings();" style="color: #37474f; border-color: #cfd8dc;">⚙️ Ajustes</button>
-      <button class="file-option-btn" onclick="closeFileModal(); ;" style="color: #d32f2f; border-color: #ef9a9a;">🗑️ Limpiar Datos</button>
+      <button class="file-option-btn" onclick="closeFileModal(); openRosterModal();" style="color: #0288d1; border-color: #b3e5fc;">📥 Cargar Series y Nadadores</button>
+      <button class="file-option-btn" onclick="closeFileModal(); syncToGoogleSheet();" style="color: #e65100; border-color: #ffe0b2;">☁️ Forzar Sincronización Nube</button>
+      <button class="file-option-btn" onclick="closeFileModal(); openSettings();" style="color: #37474f; border-color: #cfd8dc;">⚙️ Configuración del Torneo</button>
     </div>
     <div class="modal-actions" style="margin-top: 5px;">
       <button class="header-btn" onclick="closeFileModal()">Cerrar</button>
