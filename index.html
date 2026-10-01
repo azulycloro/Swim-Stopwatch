@@ -707,20 +707,24 @@ function processOutbox() {
     const item = items[0];
     fetch(SwimStore.state.googleWebAppUrl, {
       method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'text/plain' },
+      headers: { 'Content-Type': 'text/plain' }, // Eliminado mode: 'no-cors'
       body: JSON.stringify(item.payload)
-    }).then(() => {
-      const delTx = db.transaction(['outbox'], 'readwrite');
-      const delStore = delTx.objectStore('outbox');
-      delStore.delete(item.id);
-      delTx.oncomplete = () => {
-        const ind = document.getElementById('save-status-indicator');
-        if (ind) ind.innerText = "✓ Sincronizado con la nube (Outbox OK)";
-        processOutbox();
-      };
+    })
+    .then(response => response.json()) // Validamos la respuesta real del servidor
+    .then(data => {
+      // Solo borramos el dato de la cola local si Google confirma el éxito
+      if (data.result === "success") {
+        const delTx = db.transaction(['outbox'], 'readwrite');
+        const delStore = delTx.objectStore('outbox');
+        delStore.delete(item.id);
+        delTx.oncomplete = () => {
+          const ind = document.getElementById('save-status-indicator');
+          if (ind) ind.innerText = "✓ Sincronizado con la nube (Outbox OK)";
+          processOutbox(); // Procesar el siguiente en la cola
+        };
+      }
     }).catch(err => {
-      console.warn("Sync failed, will retry later:", err);
+      console.warn("Fallo temporal de sincronización del Outbox, se reintentará:", err);
     });
   };
 }
