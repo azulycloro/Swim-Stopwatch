@@ -1025,7 +1025,11 @@ window.addEventListener('beforeunload', (e) => {
 
 function openSettings() {
   const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
+  // Metadatos Torneo
+  document.getElementById('input-tournament-name').value = SwimStore.state.tournamentName;
+  document.getElementById('input-session-type').value = SwimStore.state.sessionType;
   document.getElementById('input-coach').value = SwimStore.state.coachName;
+  // Metadatos Técnicos
   document.getElementById('input-webapp-url').value = SwimStore.state.googleWebAppUrl;
   document.getElementById('input-lanes').value = SwimStore.state.activeLanes;
   if (h) {
@@ -1039,9 +1043,13 @@ function closeSettings() {
 }
 
 function saveSettings() {
+  // Guardar Metadatos Torneo
+  SwimStore.state.tournamentName = document.getElementById('input-tournament-name').value.trim() || "Torneo";
+  SwimStore.state.sessionType = document.getElementById('input-session-type').value;
   SwimStore.state.coachName = document.getElementById('input-coach').value.trim() || "Entrenador";
-  SwimStore.state.googleWebAppUrl = document.getElementById('input-webapp-url').value.trim();
   
+  // Guardar Metadatos Técnicos
+  SwimStore.state.googleWebAppUrl = document.getElementById('input-webapp-url').value.trim();
   const newActiveLanes = parseInt(document.getElementById('input-lanes').value, 10);
   const newSplits = parseInt(document.getElementById('input-splits').value, 10);
 
@@ -1077,7 +1085,7 @@ function saveSettings() {
   renderLanes();
   closeSettings();
   autoSaveToStorage();
-  alert("Ajustes guardados con éxito.");
+  alert("Configuración del Torneo guardada con éxito.");
 }
 
 function updateMetaDisplays() {
@@ -1104,19 +1112,6 @@ function toggleFullScreen() {
 
 function openFileModal() { document.getElementById('file-options-modal').classList.add('open'); }
 function closeFileModal() { document.getElementById('file-options-modal').classList.remove('open'); }
-function openTournamentManagerModal() { document.getElementById('tournament-manager-modal').classList.add('open'); }
-function closeTournamentManagerModal() { document.getElementById('tournament-manager-modal').classList.remove('open'); }
-
-function applyTournamentSettings() {
-  const tName = document.getElementById('input-tournament-name').value.trim();
-  const sType = document.getElementById('input-session-type').value;
-  if (tName) SwimStore.state.tournamentName = tName;
-  SwimStore.state.sessionType = sType;
-  updateMetaDisplays();
-  closeTournamentManagerModal();
-  autoSaveToStorage();
-  alert(`Torneo y Sesión actualizados: ${getFormattedTournamentLabel()}`);
-}
 
 function openOffsetModal() { document.getElementById('offset-modal').classList.add('open'); }
 function closeOffsetModal() {
