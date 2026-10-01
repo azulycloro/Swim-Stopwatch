@@ -305,30 +305,6 @@ body { display: flex; height: 100vh; background-color: #f0f4f8; overflow: hidden
   </div>
 </div>
 
-<div class="modal" id="tournament-manager-modal">
-  <div class="modal-content">
-    <h3>Administrador de Torneos y Sesiones</h3>
-    <p style="font-size: 11px; color: #555;">Crea o cambia el nombre del torneo y la sesión actual (Ej. Eliminatorias, Finales).</p>
-    <div class="form-group">
-      <label for="input-tournament-name">Nombre del Torneo:</label>
-      <input type="text" id="input-tournament-name" value="Copa_Nal_Interclubes">
-    </div>
-    <div class="form-group">
-      <label for="input-session-type">Tipo de Sesión / Jornada:</label>
-      <select id="input-session-type">
-        <option value="Eliminatorias" selected>Eliminatorias</option>
-        <option value="Finales">Finales</option>
-        <option value="Semifinales">Semifinales</option>
-        <option value="Controles">Control de Tiempos</option>
-      </select>
-    </div>
-    <div class="modal-actions">
-      <button class="header-btn" onclick="closeTournamentManagerModal()">Cancelar</button>
-      <button class="header-btn" style="background: #2e7d32; color: white;" onclick="applyTournamentSettings()">Crear / Cambiar Sesión</button>
-    </div>
-  </div>
-</div>
-
 <div class="modal" id="roster-modal">
   <div class="modal-content">
     <h3>Sincronizar Series y Nadadores</h3>
@@ -350,36 +326,68 @@ body { display: flex; height: 100vh; background-color: #f0f4f8; overflow: hidden
 </div>
 
 <div class="modal" id="settings-modal">
-  <div class="modal-content">
-    <h3>Ajustes</h3>
-    <div class="form-group">
-      <label for="input-coach">Entrenador:</label>
-      <input type="text" id="input-coach" value="Juan Albarracin">
+  <div class="modal-content" style="max-height: 85vh; overflow-y: auto;">
+    <h3>Configuración General</h3>
+    
+    <!-- Bloque 1: Metadatos del Torneo -->
+    <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; border: 1px solid #e9ecef; margin-bottom: 5px;">
+      <div class="form-group">
+        <label for="input-tournament-name">Nombre del Torneo:</label>
+        <input type="text" id="input-tournament-name">
+      </div>
+      <div class="form-group" style="margin-top: 5px;">
+        <label for="input-session-type">Jornada / Sesión:</label>
+        <select id="input-session-type">
+          <option value="Eliminatorias">Eliminatorias</option>
+          <option value="Finales">Finales</option>
+          <option value="Semifinales">Semifinales</option>
+          <option value="Controles">Control de Tiempos</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-top: 5px;">
+        <label for="input-coach">Entrenador Responsable:</label>
+        <input type="text" id="input-coach">
+      </div>
     </div>
-    <div class="form-group">
-      <label for="input-webapp-url">Sincronizar con Google Sheets:</label>
-      <input type="text" id="input-webapp-url" placeholder="https://script.google.com/macros/s/.../exec">
+
+    <!-- Bloque 2: Parámetros Técnicos -->
+    <div style="background: #e3f2fd; padding: 10px; border-radius: 6px; border: 1px solid #bbdefb; margin-bottom: 5px;">
+      <div class="form-group">
+        <label for="input-lanes">Carriles Activos:</label>
+        <select id="input-lanes">
+          <option value="1">1 Carril</option>
+          <option value="2">2 Carriles</option>
+          <option value="3">3 Carriles</option>
+          <option value="4">4 Carriles</option>
+          <option value="5">5 Carriles</option>
+          <option value="6">6 Carriles</option>
+          <option value="8">8 Carriles</option>
+          <option value="10">10 Carriles</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-top: 5px;">
+        <label for="input-splits">Splits por Prueba:</label>
+        <input type="number" id="input-splits" min="1" max="25" inputmode="numeric">
+      </div>
+      <div class="form-group" style="margin-top: 5px;">
+        <label for="input-webapp-url">Google App Script URL (Sync):</label>
+        <input type="text" id="input-webapp-url" placeholder="https://script.google.com/.../exec">
+      </div>
     </div>
-    <div class="form-group">
-      <label for="input-lanes">Carriles Activos:</label>
-      <select id="input-lanes">
-        <option value="1">1 Carril</option>
-        <option value="2">2 Carriles</option>
-        <option value="3">3 Carriles</option>
-        <option value="4">4 Carriles</option>
-        <option value="5">5 Carriles</option>
-        <option value="6" selected>6 Carriles</option>
-        <option value="8">8 Carriles</option>
-        <option value="10">10 Carriles</option>
-      </select>
+
+    <!-- Bloque 3: Respaldos y Zona Peligrosa -->
+    <div style="background: #fdf2f2; padding: 10px; border-radius: 6px; border: 1px solid #f5c6cb;">
+      <label style="font-size: 11px; font-weight: bold; color: #721c24; margin-bottom: 5px; display: block;">Mantenimiento Local</label>
+      <div style="display: flex; gap: 5px;">
+        <button class="header-btn" style="flex: 1; font-size: 11px; padding: 6px;" onclick="exportSessionJSON()">💾 Respaldar JSON</button>
+        <button class="header-btn" style="flex: 1; font-size: 11px; padding: 6px;" onclick="triggerImportSession()">📂 Cargar JSON</button>
+      </div>
+      <button class="header-btn" style="width: 100%; margin-top: 5px; background: #d32f2f; color: white; border-color: #b71c1c;" onclick="closeSettings(); clearLocalStorage();">🗑️ Limpiar Todos los Datos (Reset)</button>
     </div>
-    <div class="form-group">
-      <label for="input-splits">Splits:</label>
-      <input type="number" id="input-splits" min="1" max="25" value="4" inputmode="numeric" pattern="[0-9]*">
-    </div>
+
     <div class="modal-actions">
       <button class="header-btn" onclick="closeSettings()">Cancelar</button>
-      <button class="header-btn" style="background: #2e7d32; color: white;" onclick="saveSettings()">Guardar Ajustes</button>
+      <button class="header-btn" style="background: #2e7d32; color: white;" onclick="saveSettings()">Guardar Todo</button>
     </div>
   </div>
 </div>
