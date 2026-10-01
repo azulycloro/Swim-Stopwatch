@@ -291,16 +291,97 @@ body { display: flex; height: 100vh; background-color: #f0f4f8; overflow: hidden
   </div>
 </div>
 
+<!-- Modal 1: Menú Principal de Gestión -->
 <div class="modal" id="file-options-modal">
   <div class="modal-content" style="width: 340px;">
     <h3>Gestión de Competencia</h3>
     <div class="file-options-grid">
       <button class="file-option-btn" onclick="closeFileModal(); openRosterModal();" style="color: #0288d1; border-color: #b3e5fc;">📥 Cargar Series y Nadadores</button>
-      <button class="file-option-btn" onclick="closeFileModal(); syncToGoogleSheet();" style="color: #e65100; border-color: #ffe0b2;">☁️ Forzar Sincronización Nube</button>
+      <button class="file-option-btn" onclick="closeFileModal(); openSaveSyncModal();" style="color: #e65100; border-color: #ffe0b2;">💾 Guardar / Sincronizar</button>
       <button class="file-option-btn" onclick="closeFileModal(); openSettings();" style="color: #37474f; border-color: #cfd8dc;">⚙️ Configuración del Torneo</button>
+      <button class="file-option-btn" onclick="closeFileModal(); clearLocalStorage();" style="color: #d32f2f; border-color: #ef9a9a;">🗑️ Limpiar Datos</button>
     </div>
     <div class="modal-actions" style="margin-top: 5px;">
       <button class="header-btn" onclick="closeFileModal()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal 2: NUEVO Modal de Guardar y Sincronización -->
+<div class="modal" id="save-sync-modal">
+  <div class="modal-content" style="width: 400px;">
+    <h3>Guardar y Sincronizar</h3>
+    
+    <!-- Bloque Sincronización en la Nube -->
+    <div style="background: #e3f2fd; padding: 12px; border-radius: 6px; border: 1px solid #bbdefb; margin-bottom: 10px;">
+      <label for="input-webapp-url" style="font-size: 11px; font-weight: bold; color: #01579b; margin-bottom: 6px; display: block;">Google App Script URL (Sync):</label>
+      <input type="text" id="input-webapp-url" placeholder="https://script.google.com/.../exec" style="width: 100%; box-sizing: border-box; padding: 8px; border: 1px solid #90caf9; border-radius: 4px; font-size: 11px; margin-bottom: 8px; font-family: monospace;">
+      <button class="header-btn" style="width: 100%; background: #e65100; color: white; border-color: #bf360c;" onclick="applySyncUrlAndSync()">☁️ Forzar Sincronización Nube</button>
+    </div>
+
+    <!-- Bloque Respaldos Locales -->
+    <div style="background: #f8f9fa; padding: 12px; border-radius: 6px; border: 1px solid #e9ecef; margin-bottom: 10px;">
+      <label style="font-size: 11px; font-weight: bold; color: #444; margin-bottom: 6px; display: block;">Respaldo Local (Archivos .json)</label>
+      <div style="display: flex; gap: 8px;">
+        <button class="header-btn" style="flex: 1; font-size: 13px;" onclick="closeSaveSyncModal(); exportSessionJSON()">💾 Guardar</button>
+        <button class="header-btn" style="flex: 1; font-size: 13px;" onclick="closeSaveSyncModal(); triggerImportSession()">📂 Cargar</button>
+      </div>
+    </div>
+
+    <div class="modal-actions" style="margin-top: 10px;">
+      <button class="header-btn" onclick="closeSaveSyncModal()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal 3: Modal de Configuración (Simplificado) -->
+<div class="modal" id="settings-modal">
+  <div class="modal-content" style="max-height: 85vh; overflow-y: auto;">
+    <h3>Configuración del Torneo</h3>
+    
+    <div style="background: #f8f9fa; padding: 12px; border-radius: 6px; border: 1px solid #e9ecef; margin-bottom: 10px;">
+      <div class="form-group">
+        <label for="input-tournament-name">Nombre del Torneo:</label>
+        <input type="text" id="input-tournament-name">
+      </div>
+      <div class="form-group" style="margin-top: 8px;">
+        <label for="input-session-type">Jornada / Sesión:</label>
+        <select id="input-session-type">
+          <option value="Eliminatorias">Eliminatorias</option>
+          <option value="Finales">Finales</option>
+          <option value="Semifinales">Semifinales</option>
+          <option value="Controles">Control de Tiempos</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-top: 8px;">
+        <label for="input-coach">Entrenador Responsable:</label>
+        <input type="text" id="input-coach">
+      </div>
+    </div>
+
+    <div style="background: #e3edf7; padding: 12px; border-radius: 6px; border: 1px solid #bbdefb; margin-bottom: 5px;">
+      <div class="form-group">
+        <label for="input-lanes">Carriles Activos:</label>
+        <select id="input-lanes">
+          <option value="1">1 Carril</option>
+          <option value="2">2 Carriles</option>
+          <option value="3">3 Carriles</option>
+          <option value="4">4 Carriles</option>
+          <option value="5">5 Carriles</option>
+          <option value="6">6 Carriles</option>
+          <option value="8">8 Carriles</option>
+          <option value="10">10 Carriles</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-top: 8px;">
+        <label for="input-splits">Splits por Prueba:</label>
+        <input type="number" id="input-splits" min="1" max="25" inputmode="numeric">
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="header-btn" onclick="closeSettings()">Cancelar</button>
+      <button class="header-btn" style="background: #2e7d32; color: white;" onclick="saveSettings()">Guardar Configuración</button>
     </div>
   </div>
 </div>
@@ -321,73 +402,6 @@ body { display: flex; height: 100vh; background-color: #f0f4f8; overflow: hidden
     <div class="modal-actions">
       <button class="header-btn" onclick="closeRosterModal()">Cancelar</button>
       <button class="header-btn" style="background: #0288d1; color: white;" onclick="processRosterImport()">Sincronizar Series</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal" id="settings-modal">
-  <div class="modal-content" style="max-height: 85vh; overflow-y: auto;">
-    <h3>Configuración General</h3>
-    
-    <!-- Bloque 1: Metadatos del Torneo -->
-    <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; border: 1px solid #e9ecef; margin-bottom: 5px;">
-      <div class="form-group">
-        <label for="input-tournament-name">Nombre del Torneo:</label>
-        <input type="text" id="input-tournament-name">
-      </div>
-      <div class="form-group" style="margin-top: 5px;">
-        <label for="input-session-type">Jornada / Sesión:</label>
-        <select id="input-session-type">
-          <option value="Eliminatorias">Eliminatorias</option>
-          <option value="Finales">Finales</option>
-          <option value="Semifinales">Semifinales</option>
-          <option value="Controles">Control de Tiempos</option>
-        </select>
-      </div>
-      <div class="form-group" style="margin-top: 5px;">
-        <label for="input-coach">Entrenador Responsable:</label>
-        <input type="text" id="input-coach">
-      </div>
-    </div>
-
-    <!-- Bloque 2: Parámetros Técnicos -->
-    <div style="background: #e3f2fd; padding: 10px; border-radius: 6px; border: 1px solid #bbdefb; margin-bottom: 5px;">
-      <div class="form-group">
-        <label for="input-lanes">Carriles Activos:</label>
-        <select id="input-lanes">
-          <option value="1">1 Carril</option>
-          <option value="2">2 Carriles</option>
-          <option value="3">3 Carriles</option>
-          <option value="4">4 Carriles</option>
-          <option value="5">5 Carriles</option>
-          <option value="6">6 Carriles</option>
-          <option value="8">8 Carriles</option>
-          <option value="10">10 Carriles</option>
-        </select>
-      </div>
-      <div class="form-group" style="margin-top: 5px;">
-        <label for="input-splits">Splits por Prueba:</label>
-        <input type="number" id="input-splits" min="1" max="25" inputmode="numeric">
-      </div>
-      <div class="form-group" style="margin-top: 5px;">
-        <label for="input-webapp-url">Google App Script URL (Sync):</label>
-        <input type="text" id="input-webapp-url" placeholder="https://script.google.com/.../exec">
-      </div>
-    </div>
-
-    <!-- Bloque 3: Respaldos y Zona Peligrosa -->
-    <div style="background: #fdf2f2; padding: 10px; border-radius: 6px; border: 1px solid #f5c6cb;">
-      <label style="font-size: 11px; font-weight: bold; color: #721c24; margin-bottom: 5px; display: block;">Mantenimiento Local</label>
-      <div style="display: flex; gap: 5px;">
-        <button class="header-btn" style="flex: 1; font-size: 11px; padding: 6px;" onclick="exportSessionJSON()">💾 Respaldar JSON</button>
-        <button class="header-btn" style="flex: 1; font-size: 11px; padding: 6px;" onclick="triggerImportSession()">📂 Cargar JSON</button>
-      </div>
-      <button class="header-btn" style="width: 100%; margin-top: 5px; background: #d32f2f; color: white; border-color: #b71c1c;" onclick="closeSettings(); clearLocalStorage();">🗑️ Limpiar Todos los Datos (Reset)</button>
-    </div>
-
-    <div class="modal-actions">
-      <button class="header-btn" onclick="closeSettings()">Cancelar</button>
-      <button class="header-btn" style="background: #2e7d32; color: white;" onclick="saveSettings()">Guardar Todo</button>
     </div>
   </div>
 </div>
@@ -467,7 +481,7 @@ function syncWithCloudBidirectional() {
   };
 
   const ind = document.getElementById('save-status-indicator');
-  if (ind) ind.innerText = SwimStore.state.hasUnsyncedChanges ? "☁️ Sincronizando cambios con la nube..." : "☁️️ Buscando actualizaciones de otros...";
+  if (ind) ind.innerText = SwimStore.state.hasUnsyncedChanges ? "☁️ Sincronizando cambios con la nube..." : "☁ Buscando actualizaciones de otros...";
 
   fetch(SwimStore.state.googleWebAppUrl, {
     method: 'POST',
@@ -952,8 +966,7 @@ async function initApp() {
     handleBigButtonClick();
   });
 
-window.addEventListener('beforeunload', (e) => {
-    // Si estamos limpiando datos, cancelamos el autoguardado para evitar reescribir datos sucios
+  window.addEventListener('beforeunload', (e) => {
     if (window.isClearingData) return; 
     saveCurrentHeatState();
     autoSaveToStorage();
@@ -1023,14 +1036,33 @@ window.addEventListener('beforeunload', (e) => {
   loadHeatState(1);
 }
 
+// ====== NUEVAS FUNCIONES PARA MODAL GUARDAR / SINCRONIZAR ======
+function openSaveSyncModal() {
+  document.getElementById('input-webapp-url').value = SwimStore.state.googleWebAppUrl || "";
+  document.getElementById('save-sync-modal').classList.add('open');
+}
+
+function closeSaveSyncModal() {
+  SwimStore.state.googleWebAppUrl = document.getElementById('input-webapp-url').value.trim();
+  autoSaveToStorage();
+  document.getElementById('save-sync-modal').classList.remove('open');
+}
+
+function applySyncUrlAndSync() {
+  SwimStore.state.googleWebAppUrl = document.getElementById('input-webapp-url').value.trim();
+  autoSaveToStorage();
+  syncToGoogleSheet();
+  alert("Sincronización en curso. Revisa el estado en la barra inferior.");
+}
+
+// ====== ACTUALIZACIÓN DE FUNCIONES DE CONFIGURACIÓN DE TORNEO ======
 function openSettings() {
   const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
-  // Metadatos Torneo
+  // 1. Datos estáticos
   document.getElementById('input-tournament-name').value = SwimStore.state.tournamentName;
   document.getElementById('input-session-type').value = SwimStore.state.sessionType;
   document.getElementById('input-coach').value = SwimStore.state.coachName;
-  // Metadatos Técnicos
-  document.getElementById('input-webapp-url').value = SwimStore.state.googleWebAppUrl;
+  // 2. Parámetros Físicos
   document.getElementById('input-lanes').value = SwimStore.state.activeLanes;
   if (h) {
     document.getElementById('input-splits').value = h.activeSplits || 4;
@@ -1043,13 +1075,12 @@ function closeSettings() {
 }
 
 function saveSettings() {
-  // Guardar Metadatos Torneo
+  // Guardar Torneo y Sesión
   SwimStore.state.tournamentName = document.getElementById('input-tournament-name').value.trim() || "Torneo";
   SwimStore.state.sessionType = document.getElementById('input-session-type').value;
   SwimStore.state.coachName = document.getElementById('input-coach').value.trim() || "Entrenador";
   
-  // Guardar Metadatos Técnicos
-  SwimStore.state.googleWebAppUrl = document.getElementById('input-webapp-url').value.trim();
+  // Guardar Parámetros de Pista
   const newActiveLanes = parseInt(document.getElementById('input-lanes').value, 10);
   const newSplits = parseInt(document.getElementById('input-splits').value, 10);
 
