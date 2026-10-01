@@ -301,7 +301,7 @@ body { display: flex; height: 100vh; background-color: #f0f4f8; overflow: hidden
       <button class="file-option-btn" onclick="closeFileModal(); triggerImportSession();" style="color: #2e7d32; border-color: #c8e6c9;">📂 Cargar Sesión local</button>
       <button class="file-option-btn" onclick="closeFileModal(); syncToGoogleSheet();" style="color: #e65100; border-color: #ffe0b2;">☁️ Sincronizar con Google Sheets</button>
       <button class="file-option-btn" onclick="closeFileModal(); openSettings();" style="color: #37474f; border-color: #cfd8dc;">⚙️ Ajustes</button>
-      <button class="file-option-btn" onclick="closeFileModal(); clearLocalStorage();" style="color: #d32f2f; border-color: #ef9a9a;">🗑️ Limpiar Datos</button>
+      <button class="file-option-btn" onclick="closeFileModal(); ;" style="color: #d32f2f; border-color: #ef9a9a;">🗑️ Limpiar Datos</button>
     </div>
     <div class="modal-actions" style="margin-top: 5px;">
       <button class="header-btn" onclick="closeFileModal()">Cerrar</button>
@@ -1282,6 +1282,10 @@ function autoSaveToStorage() {
 
 function clearLocalStorage() {
   if (confirm("¿Estás seguro de borrar todos los datos acumulados, INCLUYENDO FOTOGRAFÍAS, en esta base de datos local?")) {
+    
+    // Bloqueamos el evento beforeunload para que no haga auto-guardado al recargar
+    window.isClearingData = true; 
+
     if (db) {
       try {
         const transaction = db.transaction(['sessions', 'outbox', 'photos'], 'readwrite');
@@ -1290,10 +1294,13 @@ function clearLocalStorage() {
         transaction.objectStore('photos').clear(); 
         
         transaction.oncomplete = () => {
-          SwimStore.state.heatsData = { 1: createEmptyHeatState("Prueba 1", 2) };
+          // 1. Forzar 1 carril y 4 splits por defecto
+          SwimStore.state.activeLanes = 1;
+          SwimStore.state.heatsData = { 1: createEmptyHeatState("Prueba 1", 4) }; 
           SwimStore.state.currentHeatId = 1;
           SwimStore.state.totalHeatsCount = 1;
           
+          // 2. Limpiar los metadatos
           SwimStore.state.tournamentName = "";
           SwimStore.state.coachName = "";
           SwimStore.state.sessionType = "Finales"; 
