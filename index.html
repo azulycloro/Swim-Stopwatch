@@ -389,19 +389,29 @@ body { display: flex; height: 100vh; background-color: #f0f4f8; overflow: hidden
 <div class="modal" id="roster-modal">
   <div class="modal-content">
     <h3>Sincronizar Series y Nadadores</h3>
-    <p style="font-size: 11px; color: #555;">Importa un archivo CSV o pega los datos en el formato:<br><b>[Prueba], [Distancia], [Estilo], [Serie], [Carril], [Nombre], [Tiempo Sembrado], [Marca Minima]</b></p>
+    <p style="font-size: 11px; color: #555;">Importa un archivo CSV, pega los datos o cárgalos directamente desde tu Google Sheets (Pestaña Programacion, Columna M).</p>
+    
+    <!-- NUEVO: Botón de Carga desde la Nube -->
+    <div class="form-group" style="background: #e3f2fd; padding: 12px; border-radius: 6px; border: 1px solid #bbdefb; margin-bottom: 5px;">
+      <label style="color: #01579b; font-size: 13px;">☁️ 1. Carga Inteligente desde la Nube:</label>
+      <button class="header-btn" id="btn-cloud-roster" style="width: 100%; background: #0288d1; color: white; border-color: #01579b; margin-top: 5px;" onclick="fetchRosterFromCloud()">
+        Descargar Programación de Hoy
+      </button>
+    </div>
+
+    <div style="text-align: center; font-size: 11px; color: #888; font-weight: bold; margin: 5px 0;">- O BIEN MANUALMENTE -</div>
+
     <div class="form-group">
-      <label>1. Cargar archivo CSV / TXT:</label>
+      <label>2. Cargar archivo CSV / TXT:</label>
       <input type="file" id="roster-file-input" accept=".csv, .txt">
     </div>
-    <div style="text-align: center; font-size: 11px; color: #888; font-weight: bold;">- O BIEN -</div>
-    <div class="form-group">
-      <label for="roster-text-input">2. Pegar Datos Directos:</label>
-      <textarea id="roster-text-input" rows="5" placeholder="Prueba, Distancia, Estilo, Serie, Carril, Nombre, Tiempo Sembrado, Marca Minima"></textarea>
+    <div class="form-group" style="margin-top: 5px;">
+      <label for="roster-text-input">3. Pegar Datos Directos:</label>
+      <textarea id="roster-text-input" rows="3" placeholder="Prueba, Distancia, Estilo, Serie, Carril, Nombre, Tiempo Sembrado, Marca Minima"></textarea>
     </div>
     <div class="modal-actions">
       <button class="header-btn" onclick="closeRosterModal()">Cancelar</button>
-      <button class="header-btn" style="background: #0288d1; color: white;" onclick="processRosterImport()">Sincronizar Series</button>
+      <button class="header-btn" style="background: #2e7d32; color: white;" onclick="processRosterImport()">Sincronizar Manual</button>
     </div>
   </div>
 </div>
@@ -857,7 +867,7 @@ async function renderPhotoPanel() {
     const btnDel = document.createElement('button');
     btnDel.className = 'header-btn';
     btnDel.style.cssText = 'padding: 4px 8px; font-size: 11px; color: #d32f2f; border-color: #ef9a9a;';
-    btnDel.innerText = '🗑️';
+    btnDel.innerText = '🗑️️';
     btnDel.title = 'Eliminar fotografía';
     btnDel.onclick = () => deletePhoto(idx);
 
@@ -1457,6 +1467,7 @@ function switchHeat(newHeatId) {
   autoSaveToStorage();
 }
 
+// NUEVA LÓGICA: Navegación Estricta hacia atrás
 function goToPreviousHeat() {
   saveCurrentHeatState();
   const heatIds = Object.keys(SwimStore.state.heatsData).map(id => parseInt(id)).sort((a, b) => a - b);
@@ -1476,14 +1487,14 @@ function goToPreviousHeat() {
   }
 }
 
+// NUEVA LÓGICA: Salto Inteligente a Frontera de Competencia
 function goToNextTargetHeat() {
   saveCurrentHeatState();
   const heatIds = Object.keys(SwimStore.state.heatsData).map(id => parseInt(id)).sort((a,b)=>a-b);
   let currentIndex = heatIds.indexOf(SwimStore.state.currentHeatId);
   let targetHeatId = null;
 
-  // 1. Prioridad Absoluta: Si hay una prueba corriendo el cronómetro en segundo plano, 
-  // saltar a ella inmediatamente para no perder la toma de tiempos.
+  // 1. Prioridad Absoluta: Si hay una prueba corriendo el cronómetro en segundo plano, saltar a ella inmediatamente
   for (let hId in SwimStore.state.heatsData) {
     if (SwimStore.state.heatsData[hId].isRunning && parseInt(hId) !== SwimStore.state.currentHeatId) {
       targetHeatId = parseInt(hId);
@@ -1493,7 +1504,6 @@ function goToNextTargetHeat() {
 
   // 2. Lógica Inteligente de Salto a la Frontera de la Competencia
   if (targetHeatId === null) {
-    // A) Encontrar el índice de la ÚLTIMA prueba que tiene tiempos registrados (la frontera real)
     let furthestTimedIndex = -1;
     for (let i = 0; i < heatIds.length; i++) {
       if (hasHeatTimes(SwimStore.state.heatsData[heatIds[i]])) {
@@ -1501,13 +1511,8 @@ function goToNextTargetHeat() {
       }
     }
 
-    // B) Determinar desde dónde buscar la siguiente prueba vacía.
-    // Usamos Math.max para comparar: Si estamos en la prueba 3 y la frontera es la 10,
-    // empezaremos a buscar desde la 10 + 1 (ignorando vacíos anteriores como la prueba 7).
-    // Si estamos en la 11 (vacía), buscaremos a partir de la 11 + 1.
     let searchStartIndex = Math.max(currentIndex, furthestTimedIndex) + 1;
 
-    // C) Buscar la primera prueba que esté realmente sin tiempos a partir del punto seguro
     for (let i = searchStartIndex; i < heatIds.length; i++) {
       if (!hasHeatTimes(SwimStore.state.heatsData[heatIds[i]])) {
         targetHeatId = heatIds[i];
@@ -1524,10 +1529,10 @@ function goToNextTargetHeat() {
     loadHeatState(SwimStore.state.currentHeatId);
     autoSaveToStorage();
   } else {
-    // Feedback por si el entrenador presiona ">" y ya no hay más pruebas creadas en la jornada
     alert("Estás en la última prueba disponible o no hay más pruebas por cronometrar hacia adelante.");
   }
 }
+
 function hasHeatTimes(heatObj) {
   if (heatObj.cards && heatObj.cards.length > 0) return true;
   if (heatObj.elapsedTime > 0) return true;
@@ -1746,7 +1751,6 @@ function renderLanes() {
     };
     splitsRow.appendChild(hideBtn);
 
-    // --- NUEVO BLOQUE: Caja Marca Mínima ---
     const minMarkBox = document.createElement('div');
     minMarkBox.className = 'min-mark-container seed-yellow';
     minMarkBox.id = `min-mark-container-${laneNum}`;
@@ -1762,7 +1766,6 @@ function renderLanes() {
     minMarkBox.appendChild(minMarkLabel);
     minMarkBox.appendChild(minMarkVal);
     splitsRow.appendChild(minMarkBox);
-    // --- FIN NUEVO BLOQUE ---
 
     row.appendChild(splitsRow);
     container.appendChild(row);
@@ -1928,23 +1931,18 @@ function updateLaneHeaderColor(laneNum) {
     applyColorClass('seed-yellow');
   }
 
-  // Lógica INDEPENDIENTE para el cajón de Marca Mínima
   const minMarkBoxEl = document.getElementById(`min-mark-container-${laneNum}`);
   if (minMarkBoxEl) {
     const minMarkStr = laneObj.marcaMinima ? laneObj.marcaMinima.trim() : "";
     const minMarkMs = minMarkStr ? parseTimeToMs(minMarkStr) : NaN;
     
-    // Limpiamos colores previos
     minMarkBoxEl.classList.remove('seed-yellow', 'seed-green', 'seed-red');
     
     if (isNaN(minMarkMs) || minMarkMs <= 0 || computedMsForColor <= 0) {
-      // Si no hay marca mínima configurada o no hay tiempo computado aún
       minMarkBoxEl.classList.add('seed-yellow');
     } else if (computedMsForColor <= minMarkMs) {
-      // Logró la marca mínima o estuvo por debajo (es decir, fue más rápido)
       minMarkBoxEl.classList.add('seed-green');
     } else {
-      // No logró la marca mínima (fue más lento)
       minMarkBoxEl.classList.add('seed-red');
     }
   }
@@ -1989,6 +1987,50 @@ function closeRosterModal() {
   document.getElementById('roster-text-input').value = "";
 }
 
+// NUEVA FUNCIÓN: Descarga de Datos desde Google Sheets
+function fetchRosterFromCloud() {
+  const url = SwimStore.state.googleWebAppUrl;
+  
+  if (!url || url.trim() === "") {
+    alert("⚠️ Primero debes configurar la URL de tu Google App Script en la sección 'Guardar / Sincronizar'.");
+    return;
+  }
+
+  const btn = document.getElementById('btn-cloud-roster');
+  const originalText = btn.innerText;
+  btn.innerText = "⏳ Descargando datos desde Sheets...";
+  btn.disabled = true;
+
+  const fetchUrl = url + "?action=getRoster";
+
+  fetch(fetchUrl)
+    .then(response => response.json())
+    .then(data => {
+      btn.innerText = originalText;
+      btn.disabled = false;
+
+      if (data.result === "success" && data.rosterData) {
+        const rawText = data.rosterData.join('\n');
+        
+        if (rawText.trim() === "") {
+            alert("La Columna M de la pestaña 'Programacion' está vacía.");
+            return;
+        }
+        
+        parseAndApplyRosterData(rawText);
+        
+      } else {
+        alert("Error al obtener los datos de la nube: " + (data.error || "Respuesta desconocida."));
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      btn.innerText = originalText;
+      btn.disabled = false;
+      alert("Error de conexión. Verifica tu internet o la URL del App Script.");
+    });
+}
+
 function processRosterImport() {
   const fileInput = document.getElementById('roster-file-input');
   const textInput = document.getElementById('roster-text-input').value.trim();
@@ -2001,7 +2043,7 @@ function processRosterImport() {
   } else if (textInput !== "") {
     parseAndApplyRosterData(textInput);
   } else {
-    alert("Por favor selecciona un archivo o pega los datos de series.");
+    alert("Por favor selecciona un archivo, pega los datos de series o usa la descarga en la nube.");
   }
 }
 
@@ -2653,7 +2695,6 @@ window.addEventListener('mouseup', () => {
 });
 
 window.addEventListener('mousemove', (e) => {
-  // Validación de seguridad para que solo trabaje cuando el modal esté abierto
   if (!imgPanning || imgScale <= 1 || !document.getElementById('image-modal').classList.contains('open')) return;
   e.preventDefault();
   imgPointX = (e.clientX - imgStart.x);
