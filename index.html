@@ -1461,63 +1461,73 @@ function goToPreviousHeat() {
   saveCurrentHeatState();
   const heatIds = Object.keys(SwimStore.state.heatsData).map(id => parseInt(id)).sort((a, b) => a - b);
   let currentIndex = heatIds.indexOf(SwimStore.state.currentHeatId);
+
+  // Navegación secuencial estricta hacia atrás (1 en 1), eliminando el salto de reinicio (wrap-around)
   if (currentIndex > 0) {
     SwimStore.state.currentHeatId = heatIds[currentIndex - 1];
+    
+    renderHeatSelectOptions();
+    document.getElementById('heat-select').value = SwimStore.state.currentHeatId;
+    loadHeatState(SwimStore.state.currentHeatId);
+    autoSaveToStorage();
   } else {
-    SwimStore.state.currentHeatId = heatIds[heatIds.length - 1];
+    // Evita saltar a la última prueba si el entrenador presiona "<" estando en la Prueba 1
+    console.log("Ya estás en la primera prueba.");
   }
-  renderHeatSelectOptions();
-  document.getElementById('heat-select').value = SwimStore.state.currentHeatId;
-  loadHeatState(SwimStore.state.currentHeatId);
-  autoSaveToStorage();
 }
 
 function goToNextTargetHeat() {
   saveCurrentHeatState();
-  let activeRunningHeatId = null;
-  for (let hId in SwimStore.state.heatsData) {
-    if (SwimStore.state.heatsData[hId].isRunning) {
-      activeRunningHeatId = parseInt(hId);
-      break;
-    }
-  }
-  if (activeRunningHeatId !== null) {
-    SwimStore.state.currentHeatId = activeRunningHeatId;
-    renderHeatSelectOptions();
-    document.getElementById('heat-select').value = SwimStore.state.currentHeatId;
-    loadHeatState(SwimStore.state.currentHeatId);
-    return;
-  }
-  let targetHeatId = null;
   const heatIds = Object.keys(SwimStore.state.heatsData).map(id => parseInt(id)).sort((a,b)=>a-b);
-  let startIndex = heatIds.indexOf(SwimStore.state.currentHeatId);
-  if (startIndex === -1) startIndex = 0;
-  for (let i = startIndex; i < heatIds.length; i++) {
-    const hId = heatIds[i];
-    if (!hasHeatTimes(SwimStore.state.heatsData[hId])) {
-      targetHeatId = hId;
+  let currentIndex = heatIds.indexOf(SwimStore.state.currentHeatId);
+  let targetHeatId = null;
+
+  // 1. Prioridad Absoluta: Si hay una prueba corriendo el cronómetro en segundo plano, 
+  // saltar a ella inmediatamente para no perder la toma de tiempos.
+  for (let hId in SwimStore.state.heatsData) {
+    if (SwimStore.state.heatsData[hId].isRunning && parseInt(hId) !== SwimStore.state.currentHeatId) {
+      targetHeatId = parseInt(hId);
       break;
     }
   }
+
+  // 2. Lógica Inteligente de Salto a la Frontera de la Competencia
   if (targetHeatId === null) {
-    for (let i = 0; i < startIndex; i++) {
-      const hId = heatIds[i];
-      if (!hasHeatTimes(SwimStore.state.heatsData[hId])) {
-        targetHeatId = hId;
+    // A) Encontrar el índice de la ÚLTIMA prueba que tiene tiempos registrados (la frontera real)
+    let furthestTimedIndex = -1;
+    for (let i = 0; i < heatIds.length; i++) {
+      if (hasHeatTimes(SwimStore.state.heatsData[heatIds[i]])) {
+        furthestTimedIndex = i;
+      }
+    }
+
+    // B) Determinar desde dónde buscar la siguiente prueba vacía.
+    // Usamos Math.max para comparar: Si estamos en la prueba 3 y la frontera es la 10,
+    // empezaremos a buscar desde la 10 + 1 (ignorando vacíos anteriores como la prueba 7).
+    // Si estamos en la 11 (vacía), buscaremos a partir de la 11 + 1.
+    let searchStartIndex = Math.max(currentIndex, furthestTimedIndex) + 1;
+
+    // C) Buscar la primera prueba que esté realmente sin tiempos a partir del punto seguro
+    for (let i = searchStartIndex; i < heatIds.length; i++) {
+      if (!hasHeatTimes(SwimStore.state.heatsData[heatIds[i]])) {
+        targetHeatId = heatIds[i];
         break;
       }
     }
   }
+
+  // 3. Ejecutar la transición visual y guardar
   if (targetHeatId !== null) {
     SwimStore.state.currentHeatId = targetHeatId;
     renderHeatSelectOptions();
     document.getElementById('heat-select').value = SwimStore.state.currentHeatId;
     loadHeatState(SwimStore.state.currentHeatId);
+    autoSaveToStorage();
   } else {
-    alert("Todas las pruebas tienen tiempos registrados o hay un cronómetro activo.");
+    // Feedback por si el entrenador presiona ">" y ya no hay más pruebas creadas en la jornada
+    alert("Estás en la última prueba disponible o no hay más pruebas por cronometrar hacia adelante.");
   }
 }
-
 function hasHeatTimes(heatObj) {
   if (heatObj.cards && heatObj.cards.length > 0) return true;
   if (heatObj.elapsedTime > 0) return true;
