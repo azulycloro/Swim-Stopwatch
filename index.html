@@ -440,6 +440,12 @@ body { display: flex; height: 100vh; background-color: #f0f4f8; overflow: hidden
 
 <script>
 /* ==========================================================================
+   CONFIGURACIÓN MAESTRA
+   ========================================================================== */
+// REEMPLAZA ESTA URL CON TU NUEVA IMPLEMENTACIÓN DE APPS SCRIPT
+const CONFIG_MASTER_URL = "https://script.google.com/macros/s/AKfycbxr8CjRjPWQPQ7A96FJg7lIGDdAu0BVi3hLq5VPg36dwqMoIgDFg3S1PiAuMN3MS6NQvA/exec";
+
+/* ==========================================================================
    STATE MANAGEMENT (SwimStore) - Arquitectura Centralizada
    ========================================================================== */
 const SwimStore = {
@@ -451,7 +457,7 @@ const SwimStore = {
     tournamentName: "Torneo",
     sessionType: "Finales",
     coachName: "Juan Albarracin",
-    googleWebAppUrl: "",
+    googleWebAppUrl: CONFIG_MASTER_URL,
     cardIdCounter: 0,
     activeModalPhotoIndex: null,
     hasUnsyncedChanges: false
@@ -867,7 +873,7 @@ async function renderPhotoPanel() {
     const btnDel = document.createElement('button');
     btnDel.className = 'header-btn';
     btnDel.style.cssText = 'padding: 4px 8px; font-size: 11px; color: #d32f2f; border-color: #ef9a9a;';
-    btnDel.innerText = '🗑️️';
+    btnDel.innerText = '🗑️';
     btnDel.title = 'Eliminar fotografía';
     btnDel.onclick = () => deletePhoto(idx);
 
@@ -1007,14 +1013,17 @@ async function initApp() {
       SwimStore.state.tournamentName = savedState.tournamentName || "Torneo";
       SwimStore.state.sessionType = savedState.sessionType || "Finales";
       SwimStore.state.coachName = savedState.coachName || "Juan Albarracin";
-      SwimStore.state.googleWebAppUrl = savedState.googleWebAppUrl || "https://script.google.com/macros/s/AKfycbzZdPeFatshoeMUr0KXZBC_OkesEfsK3dSg2orHMoPE0rEWU9yhuiVdkZWNOKghoewgnA/exec";
+      
+      // ====== CAMBIO: FORZAR SIEMPRE LA URL MAESTRA DEL CÓDIGO ======
+      SwimStore.state.googleWebAppUrl = CONFIG_MASTER_URL;
+      
       SwimStore.state.cardIdCounter = savedState.cardIdCounter || 0;
       
       for (let hId in SwimStore.state.heatsData) {
         if (!SwimStore.state.heatsData[hId].hiddenLanes) SwimStore.state.heatsData[hId].hiddenLanes = [];
         if (!SwimStore.state.heatsData[hId].attachedPhotos) SwimStore.state.heatsData[hId].attachedPhotos = [];
         
-        // Migración para respaldos JSON antiguos: Sanea y añade marcaMinima si no existía
+        // Migración para respaldos JSON antiguos
         SwimStore.state.heatsData[hId].laneData.forEach(lane => {
           if (typeof lane.marcaMinima === "undefined") {
             lane.marcaMinima = "";
@@ -1056,13 +1065,15 @@ async function initApp() {
   loadHeatState(1);
 }
 
-// ====== NUEVAS FUNCIONES PARA MODAL GUARDAR / SINCRONIZAR ======
+// ====== MODALES GUARDAR / SINCRONIZAR ======
 function openSaveSyncModal() {
   document.getElementById('input-webapp-url').value = SwimStore.state.googleWebAppUrl || "";
   document.getElementById('save-sync-modal').classList.add('open');
 }
 
 function closeSaveSyncModal() {
+  // Ahora solo guarda temporalmente lo que modifiques en el modal, 
+  // pero al recargar la app volverá a la CONFIG_MASTER_URL
   SwimStore.state.googleWebAppUrl = document.getElementById('input-webapp-url').value.trim();
   autoSaveToStorage();
   document.getElementById('save-sync-modal').classList.remove('open');
@@ -1244,7 +1255,6 @@ function importSessionJSON(event) {
           if (!SwimStore.state.heatsData[hId].hiddenLanes) SwimStore.state.heatsData[hId].hiddenLanes = [];
           if (!SwimStore.state.heatsData[hId].attachedPhotos) SwimStore.state.heatsData[hId].attachedPhotos = [];
           
-          // Migración para respaldos JSON antiguos: Sanea y añade marcaMinima si no existía
           SwimStore.state.heatsData[hId].laneData.forEach(lane => {
             if (typeof lane.marcaMinima === "undefined") {
               lane.marcaMinima = "";
@@ -1357,11 +1367,11 @@ function clearLocalStorage() {
           SwimStore.state.currentHeatId = 1;
           SwimStore.state.totalHeatsCount = 1;
           
-          // 2. Limpiar los metadatos
+          // 2. Limpiar los metadatos y aplicar la maestra
           SwimStore.state.tournamentName = "";
           SwimStore.state.coachName = "";
           SwimStore.state.sessionType = "Finales"; 
-          SwimStore.state.googleWebAppUrl = "";
+          SwimStore.state.googleWebAppUrl = CONFIG_MASTER_URL;
           
           const cleanState = {
             tournamentName: SwimStore.state.tournamentName,
@@ -1473,7 +1483,6 @@ function goToPreviousHeat() {
   const heatIds = Object.keys(SwimStore.state.heatsData).map(id => parseInt(id)).sort((a, b) => a - b);
   let currentIndex = heatIds.indexOf(SwimStore.state.currentHeatId);
 
-  // Navegación secuencial estricta hacia atrás (1 en 1), eliminando el salto de reinicio (wrap-around)
   if (currentIndex > 0) {
     SwimStore.state.currentHeatId = heatIds[currentIndex - 1];
     
@@ -1482,7 +1491,6 @@ function goToPreviousHeat() {
     loadHeatState(SwimStore.state.currentHeatId);
     autoSaveToStorage();
   } else {
-    // Evita saltar a la última prueba si el entrenador presiona "<" estando en la Prueba 1
     console.log("Ya estás en la primera prueba.");
   }
 }
@@ -1494,7 +1502,6 @@ function goToNextTargetHeat() {
   let currentIndex = heatIds.indexOf(SwimStore.state.currentHeatId);
   let targetHeatId = null;
 
-  // 1. Prioridad Absoluta: Si hay una prueba corriendo el cronómetro en segundo plano, saltar a ella inmediatamente
   for (let hId in SwimStore.state.heatsData) {
     if (SwimStore.state.heatsData[hId].isRunning && parseInt(hId) !== SwimStore.state.currentHeatId) {
       targetHeatId = parseInt(hId);
@@ -1502,7 +1509,6 @@ function goToNextTargetHeat() {
     }
   }
 
-  // 2. Lógica Inteligente de Salto a la Frontera de la Competencia
   if (targetHeatId === null) {
     let furthestTimedIndex = -1;
     for (let i = 0; i < heatIds.length; i++) {
@@ -1521,7 +1527,6 @@ function goToNextTargetHeat() {
     }
   }
 
-  // 3. Ejecutar la transición visual y guardar
   if (targetHeatId !== null) {
     SwimStore.state.currentHeatId = targetHeatId;
     renderHeatSelectOptions();
