@@ -1548,7 +1548,18 @@ function hasHeatTimes(heatObj) {
   }
   return false;
 }
-
+  
+// NUEVA FUNCIÓN: Ordena las pruebas de forma natural (ej. Prueba 2 antes de Prueba 10)
+function getSortedHeatIds() {
+  return Object.keys(SwimStore.state.heatsData)
+    .map(id => parseInt(id))
+    .sort((a, b) => {
+      const nameA = SwimStore.state.heatsData[a].name;
+      const nameB = SwimStore.state.heatsData[b].name;
+      // localeCompare con 'numeric: true' soluciona el problema de "Serie 10 vs Serie 3"
+      return nameA.localeCompare(nameB, undefined, { numeric: true, sensitivity: 'base' });
+    });
+}
 function renderHeatSelectOptions() {
   const select = document.getElementById('heat-select');
   select.innerHTML = "";
