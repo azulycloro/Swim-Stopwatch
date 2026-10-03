@@ -334,7 +334,7 @@ body { display: flex; height: 100vh; background-color: #f0f4f8; overflow: hidden
   </div>
 </div>
 
-<!-- Modal 3: Modal de Configuración (Simplificado) -->
+<!-- Modal 3: Modal de Configuración -->
 <div class="modal" id="settings-modal">
   <div class="modal-content" style="max-height: 85vh; overflow-y: auto;">
     <h3>Configuración del Torneo</h3>
@@ -391,7 +391,7 @@ body { display: flex; height: 100vh; background-color: #f0f4f8; overflow: hidden
     <h3>Sincronizar Series y Nadadores</h3>
     <p style="font-size: 11px; color: #555;">Importa un archivo CSV, pega los datos o cárgalos directamente desde tu Google Sheets (Pestaña Programacion, Columna M).</p>
     
-    <!-- NUEVO: Botón de Carga desde la Nube -->
+    <!-- Botón de Carga desde la Nube -->
     <div class="form-group" style="background: #e3f2fd; padding: 12px; border-radius: 6px; border: 1px solid #bbdefb; margin-bottom: 5px;">
       <label style="color: #01579b; font-size: 13px;">☁️ 1. Carga Inteligente desde la Nube:</label>
       <button class="header-btn" id="btn-cloud-roster" style="width: 100%; background: #0288d1; color: white; border-color: #01579b; margin-top: 5px;" onclick="fetchRosterFromCloud()">
@@ -463,6 +463,19 @@ const SwimStore = {
     hasUnsyncedChanges: false
   }
 };
+
+/* ==========================================================================
+   ORDENAMIENTO NATURAL DE PRUEBAS
+   ========================================================================== */
+function getSortedHeatIds() {
+  return Object.keys(SwimStore.state.heatsData)
+    .map(id => parseInt(id))
+    .sort((a, b) => {
+      const nameA = SwimStore.state.heatsData[a].name;
+      const nameB = SwimStore.state.heatsData[b].name;
+      return nameA.localeCompare(nameB, undefined, { numeric: true, sensitivity: 'base' });
+    });
+}
 
 /* ==========================================================================
    SINCRONIZACIÓN BIDIRECCIONAL AUTOMÁTICA Y ESTADO PENDIENTE
@@ -1014,7 +1027,7 @@ async function initApp() {
       SwimStore.state.sessionType = savedState.sessionType || "Finales";
       SwimStore.state.coachName = savedState.coachName || "Juan Albarracin";
       
-      // ====== CAMBIO: FORZAR SIEMPRE LA URL MAESTRA DEL CÓDIGO ======
+      // FORZAR SIEMPRE LA URL MAESTRA DEL CÓDIGO
       SwimStore.state.googleWebAppUrl = CONFIG_MASTER_URL;
       
       SwimStore.state.cardIdCounter = savedState.cardIdCounter || 0;
@@ -1023,7 +1036,6 @@ async function initApp() {
         if (!SwimStore.state.heatsData[hId].hiddenLanes) SwimStore.state.heatsData[hId].hiddenLanes = [];
         if (!SwimStore.state.heatsData[hId].attachedPhotos) SwimStore.state.heatsData[hId].attachedPhotos = [];
         
-        // Migración para respaldos JSON antiguos
         SwimStore.state.heatsData[hId].laneData.forEach(lane => {
           if (typeof lane.marcaMinima === "undefined") {
             lane.marcaMinima = "";
@@ -1060,6 +1072,7 @@ async function initApp() {
   document.getElementById('input-tournament-name').value = SwimStore.state.tournamentName;
   document.getElementById('input-session-type').value = SwimStore.state.sessionType;
   document.getElementById('input-coach').value = SwimStore.state.coachName;
+  SwimStore.state.googleWebAppUrl = CONFIG_MASTER_URL;
   SwimStore.state.heatsData[1] = createEmptyHeatState("Prueba 1", 2);
   renderHeatSelectOptions();
   loadHeatState(1);
@@ -1072,8 +1085,6 @@ function openSaveSyncModal() {
 }
 
 function closeSaveSyncModal() {
-  // Ahora solo guarda temporalmente lo que modifiques en el modal, 
-  // pero al recargar la app volverá a la CONFIG_MASTER_URL
   SwimStore.state.googleWebAppUrl = document.getElementById('input-webapp-url').value.trim();
   autoSaveToStorage();
   document.getElementById('save-sync-modal').classList.remove('open');
@@ -1477,10 +1488,9 @@ function switchHeat(newHeatId) {
   autoSaveToStorage();
 }
 
-// NUEVA LÓGICA: Navegación Estricta hacia atrás
 function goToPreviousHeat() {
   saveCurrentHeatState();
-  const heatIds = Object.keys(SwimStore.state.heatsData).map(id => parseInt(id)).sort((a, b) => a - b);
+  const heatIds = getSortedHeatIds();
   let currentIndex = heatIds.indexOf(SwimStore.state.currentHeatId);
 
   if (currentIndex > 0) {
@@ -1495,10 +1505,9 @@ function goToPreviousHeat() {
   }
 }
 
-// NUEVA LÓGICA: Salto Inteligente a Frontera de Competencia
 function goToNextTargetHeat() {
   saveCurrentHeatState();
-  const heatIds = Object.keys(SwimStore.state.heatsData).map(id => parseInt(id)).sort((a,b)=>a-b);
+  const heatIds = getSortedHeatIds();
   let currentIndex = heatIds.indexOf(SwimStore.state.currentHeatId);
   let targetHeatId = null;
 
@@ -1548,27 +1557,19 @@ function hasHeatTimes(heatObj) {
   }
   return false;
 }
-  
-// NUEVA FUNCIÓN: Ordena las pruebas de forma natural (ej. Prueba 2 antes de Prueba 10)
-function getSortedHeatIds() {
-  return Object.keys(SwimStore.state.heatsData)
-    .map(id => parseInt(id))
-    .sort((a, b) => {
-      const nameA = SwimStore.state.heatsData[a].name;
-      const nameB = SwimStore.state.heatsData[b].name;
-      // localeCompare con 'numeric: true' soluciona el problema de "Serie 10 vs Serie 3"
-      return nameA.localeCompare(nameB, undefined, { numeric: true, sensitivity: 'base' });
-    });
-}
+
 function renderHeatSelectOptions() {
   const select = document.getElementById('heat-select');
   select.innerHTML = "";
-  for (let id in SwimStore.state.heatsData) {
+  
+  const sortedIds = getSortedHeatIds();
+  
+  sortedIds.forEach(id => {
     const opt = document.createElement('option');
     opt.value = id;
     opt.innerText = SwimStore.state.heatsData[id].name;
     select.appendChild(opt);
-  }
+  });
 }
 
 function saveCurrentHeatState() {
@@ -2003,7 +2004,6 @@ function closeRosterModal() {
   document.getElementById('roster-text-input').value = "";
 }
 
-// NUEVA FUNCIÓN: Descarga de Datos desde Google Sheets
 function fetchRosterFromCloud() {
   const url = SwimStore.state.googleWebAppUrl;
   
