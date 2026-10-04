@@ -1,1012 +1,511 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Swim Stopwatch - Entrenadores Pro v4.1 (PWA Avanzada)</title>
-<!-- Enlace al Manifest para instalación PWA -->
-<link rel="manifest" href="manifest.json">
-<style>
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
-body { display: flex; height: 100vh; background-color: #f0f4f8; overflow: hidden; touch-action: manipulation; }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Swim Stopwatch</title>
+  <style>
+    :root {
+      --bg: #eef4fb;
+      --panel: #ffffff;
+      --panel-2: #eaf3ff;
+      --line: #dfe7f3;
+      --primary: #2d6cdf;
+      --primary-dark: #184ea8;
+      --success: #2e9b57;
+      --warning: #f5a623;
+      --danger: #d94d4d;
+      --text: #1c2430;
+      --muted: #66738a;
+    }
 
-/* Estructura Principal */
-#main-container { flex: 1; display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; font-family: Arial, sans-serif; background: var(--bg); color: var(--text); }
+    body { display: flex; flex-direction: column; }
 
-/* Encabezado */
-#app-header {
-  background: #fff;
-  padding: 8px 12px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border-bottom: 2px solid #ccc;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-  overflow-x: auto;
-  overflow-y: visible;
-  white-space: nowrap;
-  flex-shrink: 0;
-  z-index: 500;
-  -webkit-overflow-scrolling: touch;
-  touch-action: pan-x;
-}
-.header-btn { padding: 10px; font-weight: bold; font-size: 15px; cursor: pointer; border: 1px solid #999; border-radius: 8px; background: #fff; box-shadow: 2px 2px 4px rgba(0,0,0,0.15); transition: background 0.15s, color 0.15s; display: inline-flex; align-items: center; justify-content: center; gap: 4px; flex-shrink: 0; min-width: 44px; min-height: 44px; }
-.header-btn:hover { background: #e6e6e6; }
-.heat-container { display: flex; align-items: center; gap: 6px; background: #e8eaf6; padding: 6px 10px; border-radius: 8px; border: 1px solid #c5cae9; flex-shrink: 0; }
-#heat-select { padding: 8px 12px; font-weight: bold; font-size: 14px; border-radius: 6px; border: 1px solid #3f51b5; background: #fff; color: #1a237e; cursor: pointer; outline: none; min-width: 200px; max-width: 280px; }
-.header-btn.large-zone { padding: 10px 14px; font-size: 16px; font-weight: 800; border-width: 2px; }
-.header-btn.delete-zone { border-color: #d9534f; color: #d9534f; background: #fdf2f2; }
-.header-btn.delete-zone.drag-over { background: #d9534f; color: white; }
-.header-btn.duplicate-zone { border-color: #f57c00; color: #ef6c00; background: #fff8e1; }
-.header-btn.duplicate-zone.drag-over { background: #ff9800; color: white; }
-.header-btn.photo-btn { border-color: #8e24aa; color: #8e24aa; background: #f3e5f5; }
-.header-btn.photo-btn:hover { background: #e1bee7; }
+    header {
+      display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+      background: #fff; border-bottom: 2px solid #dfe3ea;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      flex-wrap: wrap;
+    }
 
-/* Botón STOP */
-.btn-stop { background: #d32f2f; color: white; border: 1px solid #b71c1c; font-weight: bold; padding: 10px 24px; border-radius: 8px; cursor: pointer; font-size: 14px; box-shadow: 1px 1px 3px rgba(0,0,0,0.2); flex-shrink: 0; }
-.btn-stop:hover { background: #b71c1c; }
-.btn-offset { background: #e65100; color: white; border: 1px solid #bf360c; font-weight: bold; padding: 10px 14px; border-radius: 8px; cursor: pointer; font-size: 13px; box-shadow: 1px 1px 3px rgba(0,0,0,0.2); flex-shrink: 0; }
-.btn-offset:hover { background: #ef6c00; }
-#clock-display { font-size: 24px; font-weight: bold; font-family: monospace; margin-left: 5px; flex-shrink: 0; }
+    .btn {
+      border: 1px solid #b6c2d6; background: #fff; color: var(--text);
+      border-radius: 8px; padding: 8px 12px; font-weight: 700; cursor: pointer;
+    }
+    .btn.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+    .btn.success { background: var(--success); border-color: var(--success); color: #fff; }
+    .btn.danger { background: var(--danger); border-color: var(--danger); color: #fff; }
+    .btn.warning { background: var(--warning); border-color: var(--warning); color: #fff; }
+    .btn.small { padding: 6px 10px; font-size: 12px; }
 
-.header-top-controls { display: flex; align-items: center; gap: 6px; margin-left: auto; }
-.fullscreen-btn { background: #f8f9fa; border: 1px solid #adb5bd; color: #495057; font-size: 12px; font-weight: bold; padding: 6px 10px; border-radius: 6px; cursor: pointer; transition: background 0.1s; }
-.fullscreen-btn:hover { background: #e2e6ea; }
+    .heat-box {
+      display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: var(--panel-2); border: 1px solid #cddaf0; border-radius: 10px;
+    }
 
-/* Pool de Tarjetas */
-#cards-pool { background: #e3edf7; padding: 10px; min-height: 65px; display: flex; gap: 10px; align-items: center; overflow-x: auto; border-bottom: 2px dashed #90caf9; flex-shrink: 0; -webkit-overflow-scrolling: touch; touch-action: pan-x; cursor: pointer; }
-#cards-pool.drag-over { background: #bbdefb; border-color: #1976d2; border-style: solid; }
-.time-card { background: #fff; border: 2px solid #2196F3; border-radius: 6px; padding: 8px 12px; font-weight: bold; font-family: monospace; font-size: 16px; cursor: grab; box-shadow: 2px 2px 5px rgba(0,0,0,0.2); white-space: nowrap; flex-shrink: 0; }
-.time-card:active { cursor: grabbing; opacity: 0.7; }
-.time-card.selected { border-color: #ff9800; background: #fff3e0; outline: 2px solid #ff9800; }
-.drag-clone { position: fixed; pointer-events: none; z-index: 9999; opacity: 0.85; transform: translate(-50%, -50%) scale(1.05); box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
+    select {
+      min-width: 200px; padding: 8px 10px; border: 1px solid #99afd3; border-radius: 6px; font-weight: 700; background: #fff;
+    }
 
-/* Área central */
-#center-split-wrapper { display: flex; flex: 1; overflow: hidden; position: relative; }
-#middle-main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-#content-scroll-area { flex: 1; overflow-y: auto; overflow-x: auto; padding: 10px; display: flex; flex-direction: column; gap: 12px; -webkit-overflow-scrolling: touch; }
-#lanes-container { display: flex; flex-direction: column; gap: 8px; width: max-content; min-width: 100%; }
-.lane-row { display: flex; align-items: stretch; gap: 8px; background: #fff; padding: 6px 8px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); width: 100%; overflow: visible; }
+    #clock-display {
+      margin-left: auto; font-family: 'Courier New', monospace; font-size: 28px; font-weight: 700; letter-spacing: 1px;
+      padding: 8px 12px; background: #f8fafc; border: 1px solid var(--line); border-radius: 8px; min-width: 150px; text-align: center;
+    }
 
-/* Grupo Sticky para Botón Play y Cabecera */
-.lane-sticky-group { display: flex; gap: 4px; position: sticky; left: 0; z-index: 10; flex-shrink: 0; align-items: stretch; }
+    main {
+      display: flex; flex: 1; min-height: 0;
+    }
 
-/* Botón Split Individual por Carril */
-.lane-play-btn { background: white; border: 1px solid transparent; color: #29b6f6; font-size: 28px; font-weight: bold; width: 52px; height: 52px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; opacity: 0.9; transition: opacity 0.15s, background 0.15s; border-radius: 8px; }
-.lane-play-btn:hover { opacity: 1; background: #f5f5f5; }
+    #cards-pool {
+      width: 200px; background: #dfeefc; border-right: 2px dashed #9ec7f5;
+      padding: 10px; overflow-y: auto;
+    }
 
-.lane-header { font-weight: bold; width: 130px; min-width: 130px; max-width: 130px; min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 6px; padding: 4px; text-align: center; font-size: 10px; cursor: pointer; word-break: break-word; overflow: hidden; line-height: 1.1; box-shadow: 0 2px 0 0 rgba(0,0,0,0.05); transition: background-color 0.2s, border-color 0.2s; }
+    .time-card {
+      background: #fff; border: 2px solid var(--primary); border-radius: 8px; padding: 10px; margin-bottom: 10px; font-family: 'Courier New', monospace; font-weight: 700; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+    }
+    .time-card.selected { border-color: var(--warning); background: #fff7e8; }
 
-/* Estilos dinámicos de semáforo de ritmo */
-.lane-header.seed-yellow, .official-time-container.seed-yellow, .total-time-container.seed-yellow { background: #fff59d; border: 1px solid #fbc02d; color: #000; }
-.lane-header.seed-yellow .lane-seed { color: #d84315; }
-.lane-header.seed-green, .official-time-container.seed-green, .total-time-container.seed-green { background: #39FF14; border: 1px solid #2ecc71; color: #000; }
-.lane-header.seed-green .lane-seed { color: #1b5e20; }
-.lane-header.seed-red, .official-time-container.seed-red, .total-time-container.seed-red { background: #ff9eaa; border: 1px solid #e53935; color: #000; }
-.lane-header.seed-red .lane-seed { color: #b71c1c; }
+    #lanes-container {
+      flex: 1; padding: 12px; overflow: auto;
+    }
 
-.lane-seed { font-size: 9px; font-weight: bold; margin-top: 2px; }
-.splits-row { display: flex; gap: 6px; flex-shrink: 0; align-items: center; width: max-content; }
+    .lane-row {
+      display: grid; grid-template-columns: 140px 1fr 120px 120px; gap: 8px; align-items: center;
+      background: white; padding: 8px; border: 1px solid var(--line); border-radius: 10px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
 
-/* Celdas Split */
-.split-cell { border: 2px dashed #b0bec5; border-radius: 6px; width: 95px; min-width: 95px; height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #fafafa; position: relative; flex-shrink: 0; cursor: pointer; }
-.split-cell.drag-over { background: #e3f2fd; border-color: #2196F3; }
-.split-cell.has-data { border-style: solid; border-color: #4caf50; background: #e8f5e9; cursor: grab; transition: transform 0.1s; will-change: transform; }
-.split-cell.has-data.hold-active { transform: scale(1.05); outline: 2px dashed #ff9800; }
-.split-cell.selected { border-color: #ff9800; background: #fff3e0; outline: 2px solid #ff9800; }
-.split-label { font-size: 9px; color: #9e9e9e; font-weight: bold; pointer-events: none; }
-.split-total { font-size: 12px; font-weight: bold; font-family: monospace; color: #2e7d32; pointer-events: none; }
-.split-partial { font-size: 10px; font-family: monospace; color: #1565c0; font-weight: bold; pointer-events: none; }
+    .lane-label {
+      display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 4px;
+      background: #f3f7ff; border: 1px solid #d4dff0; border-radius: 8px; padding: 8px 6px; min-height: 58px;
+    }
+    .lane-name { font-weight: 700; }
+    .lane-seed { font-size: 11px; color: var(--muted); }
 
-/* Caja de Tiempo Total / Proyección */
-.total-time-container { border: 2px solid #0288d1; background: #e1f5fe; border-radius: 6px; padding: 3px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; width: 105px; min-width: 105px; max-width: 105px; height: 52px; flex-shrink: 0; transition: background-color 0.2s, border-color 0.2s; }
-.total-label { font-size: 9px; font-weight: bold; color: #01579b; text-transform: uppercase; }
-.total-display { font-size: 12px; font-weight: bold; font-family: monospace; color: #0277bd; text-align: center; }
+    .split-row {
+      display: flex; gap: 8px; overflow-x: auto; align-items: center;
+      min-height: 60px;
+    }
 
-/* Caja de Tiempo Oficial */
-.official-time-container { border: 2px solid #7e57c2; background: #f3e5f5; border-radius: 6px; padding: 3px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; width: 115px; min-width: 115px; max-width: 115px; height: 52px; flex-shrink: 0; transition: background-color 0.2s, border-color 0.2s; }
-.official-label { font-size: 9px; font-weight: bold; color: #512da8; text-transform: uppercase; }
-.official-input-group { display: flex; width: 100%; gap: 2px; }
-.official-input { width: 100%; box-sizing: border-box; text-align: center; font-family: monospace; font-size: 11px; font-weight: bold; padding: 3px 2px; border: 1px solid #b39ddb; border-radius: 4px; outline: none; user-select: text; -webkit-user-select: text; }
-.official-input:focus { border-color: #512da8; background: #fff; }
-.btn-adjust { background: #7e57c2; color: white; border: none; padding: 2px 4px; border-radius: 4px; font-size: 9px; font-weight: bold; cursor: pointer; width: 100%; }
-.btn-adjust:hover { background: #512da8; }
+    .split-cell {
+      min-width: 95px; min-height: 55px; border: 2px dashed #b6c4d7; border-radius: 8px; background: #f7fafc; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 4px; cursor: pointer;
+    }
+    .split-cell.has-data { border-style: solid; border-color: var(--success); background: #edf9f0; }
+    .split-cell.selected { border-color: var(--warning); background: #fff5d6; }
+    .split-label { font-size: 9px; color: var(--muted); text-transform: uppercase; }
+    .split-total { font-family: 'Courier New', monospace; font-weight: 700; color: var(--success); }
+    .split-partial { font-family: 'Courier New', monospace; font-size: 11px; color: var(--primary-dark); }
 
-/* Botones personalizados de ocultar carriles */
-.lane-hide-btn { background: transparent; border: 1px solid transparent; color: #29b6f6; font-size: 30px; font-weight: bold; width: 44px; height: 52px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; opacity: 0.5; transition: opacity 0.15s, background 0.15s; border-radius: 4px; align-self: flex-start; }
-.lane-hide-btn:hover { opacity: 1; background: rgba(0,0,0,0.06); }
+    .meta-box {
+      border: 1px solid #d8e1ee; background: #f7f9fc; border-radius: 8px; padding: 8px; display: flex; align-items: center; justify-content: center; flex-direction: column; min-height: 58px;
+    }
+    .meta-label { font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--muted); }
+    .meta-value { font-family: 'Courier New', monospace; font-weight: 700; }
 
-/* Caja de Marca Mínima */
-.min-mark-container { background: white; border: 1px solid transparent; color: #0d47a1; font-weight: bold; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 6px; width: 105px; min-width: 105px; max-width: 105px; height: 52px; flex-shrink: 0; transition: background-color 0.2s, border-color 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-.min-mark-label { font-size: 9px; text-transform: uppercase; text-align: center; }
-.min-mark-display { font-size: 12px; font-family: monospace; text-align: center; }
-.min-mark-container.seed-yellow { background: #fff59d; border-color: #fbc02d; color: #000; }
-.min-mark-container.seed-green { background: #39FF14; border-color: #2ecc71; color: #000; }
-.min-mark-container.seed-red { background: #ff9eaa; border-color: #e53935; color: #000; }
+    .lane-btn {
+      background: #fff; border: 1px solid #b4c4df; border-radius: 8px; padding: 8px 10px; cursor: pointer; font-weight: 700; color: var(--primary);
+    }
 
-/* Panel Fotográfico Integrado */
-#photo-bottom-zone { display: flex; align-items: center; justify-content: space-between; background: #fbf5fc; border: 1px solid #e1bee7; padding: 8px 12px; border-radius: 8px; margin-top: 5px; }
-#photo-footer-panel { display: none; flex-direction: column; gap: 8px; background: #fff; border: 2px dashed #8e24aa; border-radius: 8px; padding: 10px; margin-top: 5px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
-.footer-photo-item { display: flex; align-items: center; gap: 10px; background: #fdf2f2; padding: 6px; border-radius: 6px; border: 1px solid #d1c4e9; }
-.footer-photo-thumb { width: 50px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid #8e24aa; cursor: pointer; }
-.footer-photo-details { display: flex; flex-direction: column; gap: 2px; }
-.footer-photo-title { font-weight: bold; font-size: 12px; color: #4a148c; }
-.footer-photo-filename { font-size: 10px; color: #666; font-family: monospace; }
-.footer-photo-actions { display: flex; gap: 6px; margin-left: auto; }
+    footer {
+      display: flex; justify-content: space-between; align-items: center; gap: 12px; background: #1f2d3d; color: #eaf3ff; padding: 8px 14px; font-size: 12px; flex-wrap: wrap;
+    }
 
-/* Botón Lateral */
-#big-button-container { width: 160px; background: #2e7d32; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: background 0.1s; flex-shrink: 0; height: 100%; touch-action: manipulation; }
-#big-button-container:hover { background: #1b5e20; }
-#big-button-container:active { background: #0d3b13; }
-#big-button-label { color: white; font-size: 32px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; writing-mode: vertical-lr; text-orientation: mixed; transform: rotate(180deg); pointer-events: none; }
+    .status {
+      display: flex; align-items: center; gap: 8px; font-weight: 700;
+    }
+    .status-dot {
+      width: 10px; height: 10px; border-radius: 999px; background: #2ecc71; display: inline-block;
+    }
+    .status-dot.pending { background: #f39c12; }
 
-/* Panel Inferior de Metadatos */
-#app-footer-info {
-  background: #2c3e50;
-  color: #ecf0f1;
-  padding: 6px 14px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-top: 2px solid #1a252f;
-  font-size: 12px;
-  flex-shrink: 0;
-  z-index: 600;
-  box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
-}
-.footer-meta-item { display: flex; align-items: center; gap: 6px; }
-.footer-meta-item strong { color: #3498db; }
-#save-status-indicator { font-size: 11px; color: #2ecc71; font-weight: bold; }
-
-@media (max-width: 900px) {
-  #big-button-container { width: 110px; }
-  #big-button-label { font-size: 24px; }
-  .header-btn { padding: 8px; font-size: 14px; }
-  #clock-display { font-size: 20px; }
-  #app-footer-info { font-size: 10px; padding: 4px 8px; }
-  #sync-status-dot { width: 10px; height: 10px; border-radius: 50%; background: #e74c3c; display: inline-block; transition: background 0.3s; }
-  #sync-status-dot.synced { background: #2ecc71; }
-  #sync-status-dot.pending { background: #f39c12; animation: pulse 1.5s infinite; }
-  @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
-}
-
-/* Modales */
-.modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 10000; }
-.modal.open { display: flex; }
-.modal-content { background: white; padding: 25px; border-radius: 10px; width: 480px; display: flex; flex-direction: column; gap: 15px; max-width: 90vw; }
-.modal-content h3 { border-bottom: 1px solid #ccc; padding-bottom: 8px; }
-.form-group { display: flex; flex-direction: column; gap: 5px; }
-.form-group label { font-size: 13px; font-weight: bold; color: #444; }
-.form-group input, .form-group select, .form-group textarea { padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; user-select: text; -webkit-user-select: text; }
-.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
-.file-options-grid { display: flex; flex-direction: column; gap: 10px; margin-top: 5px; }
-.file-option-btn { width: 100%; padding: 12px 16px; text-align: left; border: 1px solid #ccc; background: #fff; font-size: 14px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 10px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: background-color 0.1s; }
-.file-option-btn:hover { background-color: #f8f9fa; }
-#image-modal.modal-content { 
-  width: auto; 
-  max-width: 90vw; 
-  max-height: 90vh; 
-  padding: 15px; 
-  background: #000; 
-  overflow: hidden; 
-  position: relative;
-  touch-action: none; 
-}
-#full-image-preview { 
-  max-width: 100%; 
-  max-height: 75vh; 
-  object-fit: contain; 
-  transform-origin: 0 0; 
-  will-change: transform; 
-  cursor: grab; 
-}
-#full-image-preview:active {
-  cursor: grabbing;
-}
-</style>
+    @media (max-width: 840px) {
+      main { flex-direction: column; }
+      #cards-pool { width: 100%; max-height: 180px; border-right: none; border-bottom: 2px dashed #9ec7f5; }
+      .lane-row { grid-template-columns: 120px 1fr 100px; }
+      .meta-box:nth-of-type(2) { grid-column: 2 / 4; }
+    }
+  </style>
 </head>
-<body onload="initApp()">
-<div id="main-container">
-  <header id="app-header">
-    <div class="heat-container">
-      <button class="header-btn" onclick="addHeat()" title="Añadir nueva serie" style="padding: 8px; font-size: 16px; background: #e8eaf6;">+</button>
-      <button class="header-btn" onclick="renameCurrentHeat()" title="Renombrar Prueba / Heat" style="padding: 8px; font-size: 14px;">✎</button>
-      <button class="header-btn" onclick="goToPreviousHeat()" title="Ir a la prueba/serie anterior" style="padding: 8px 12px; font-size: 18px; background: #e8eaf6; font-weight: bold;">&lt;</button>
-      <select id="heat-select" onchange="switchHeat(this.value)" title="Mantén presionado 2s o haz doble clic para eliminar la prueba"></select>
-      <button class="header-btn" onclick="goToNextTargetHeat()" title="Ir a la serie activa o próxima prueba sin tiempo" style="padding: 8px 12px; font-size: 18px; background: #e8eaf6; font-weight: bold;">&gt;</button>
+<body>
+  <header>
+    <div class="heat-box">
+      <button class="btn" id="add-heat-btn">＋</button>
+      <button class="btn small" id="rename-heat-btn">✎</button>
+      <button class="btn small" id="prev-heat-btn">◀</button>
+      <select id="heat-select"></select>
+      <button class="btn small" id="next-heat-btn">▶</button>
     </div>
-    <button class="header-btn" id="file-btn" style="color: #2e7d32; border-color: #4caf50; background: #f1f8e9;" onclick="openFileModal()" title="Gestión">📁</button>
-    <input type="file" id="session-file-input" accept=".json" style="display: none;" onchange="importSessionJSON(event)">
-    <button class="header-btn duplicate-zone large-zone" id="btn-duplicate" ondragover="allowDrop(event)" ondragenter="this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="dropToPool(event)" onclick="duplicateSelectedCard()" title="Duplicar tarjeta">⧉</button>
-    <button class="header-btn delete-zone large-zone" id="btn-delete" ondragover="allowDrop(event)" ondragenter="this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="dropDelete(event)" onclick="deleteSelectedCard()" title="Borrar tarjeta">🗑</button>
+
+    <button class="btn" id="file-btn">📁</button>
     <div id="clock-display">00:00.00</div>
-    <button class="btn-stop" onclick="stopClock()">STOP</button>
-    <button class="btn-offset" onclick="openOffsetModal()" title="Añadir tiempo por inicio tardío">+</button>
-    <div class="header-top-controls">
-      <button class="fullscreen-btn" onclick="openUnhideLaneModal()" title="Mostrar carriles ocultos">👁️</button>
-      <button class="fullscreen-btn" onclick="toggleFullScreen()" title="Pantalla Completa">⛶</button>
-    </div>
+    <button class="btn danger" id="stop-btn">STOP</button>
   </header>
 
-  <div id="center-split-wrapper">
-    <div id="middle-main-area">
-      <div id="cards-pool" onclick="handlePoolTap()" ondragover="allowDrop(event)" ondragenter="this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="dropToPool(event)" title="Haz clic para guardar la tarjeta seleccionada o arrastra para moverla al pool"></div>
-      <div id="content-scroll-area">
-        <main id="lanes-container"></main>
-        
-        <div id="photo-bottom-zone">
-          <button class="header-btn photo-btn" id="btn-add-photo" onclick="triggerCameraInput()">📷 Tomar Foto (0/4)</button>
-          <input type="file" id="camera-file-input" accept="image/*" capture="environment" style="display: none;" onchange="handlePhotoSelect(event)">
-        </div>
-        <div id="photo-footer-panel"></div>
-      </div>
-    </div>
-    <div id="big-button-container">
-      <span id="big-button-label">START</span>
-    </div>
-  </div>
+  <main>
+    <aside id="cards-pool" aria-label="Pool de tiempos"></aside>
+    <section id="lanes-container" aria-live="polite"></section>
+  </main>
 
-<footer id="app-footer-info">
-    <div class="footer-meta-item">
-      <span>Entrenador:</span>
-      <strong id="coach-name-display">Juan Albarracin</strong>
-    </div>
-    <div class="footer-meta-item">
-      <span>Torneo / Sesión:</span>
-      <strong id="tournament-meta-display">Torneo</strong>
-    </div>
-    <div class="footer-meta-item">
-      <span>App:</span>
-      <strong>v4.1 (Pro)</strong>
-    </div>
-    <div style="display: flex; align-items: center; gap: 6px;">
-      <span id="sync-status-dot" class="synced" title="Estado de sincronización"></span>
-      <div id="save-status-indicator">✓ Sincronización Offline-First activa</div>
-    </div>
+  <footer>
+    <div>Entrenador: <strong id="coach-name">Juan Albarracin</strong></div>
+    <div>Torneo: <strong id="tournament-name">Torneo</strong></div>
+    <div class="status"><span class="status-dot" id="sync-dot"></span> <span id="save-status">✓ Sincronización Offline-First activa</span></div>
   </footer>
 
-<!-- Modales -->
-<div class="modal" id="offset-modal">
-  <div class="modal-content" style="width: 360px;">
-    <h3>Compensar Inicio Tardío</h3>
-    <p style="font-size: 11px; color: #555;">Selecciona o introduce el tiempo de retraso para sumarlo de inmediato al cronómetro principal:</p>
-    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px;">
-      <button class="header-btn" style="background: #fff3e0; border-color: #e65100; color: #e65100; font-size: 16px; padding: 14px;" onclick="applyTimeOffset(10000)">+ 10 seg</button>
-      <button class="header-btn" style="background: #fff3e0; border-color: #e65100; color: #e65100; font-size: 16px; padding: 14px;" onclick="applyTimeOffset(15000)">+ 15 seg</button>
-      <button class="header-btn" style="background: #fff3e0; border-color: #e65100; color: #e65100; font-size: 16px; padding: 14px;" onclick="applyTimeOffset(20000)">+ 20 seg</button>
-      <button class="header-btn" style="background: #fff3e0; border-color: #e65100; color: #e65100; font-size: 16px; padding: 14px;" onclick="applyTimeOffset(25000)">+ 25 seg</button>
-      <button class="header-btn" style="background: #fff3e0; border-color: #e65100; color: #e65100; font-size: 16px; padding: 14px; grid-column: span 2;" onclick="applyTimeOffset(30000)">+ 30 seg</button>
-    </div>
-    <div class="form-group" style="margin-top: 15px; border-top: 1px solid #eee; padding-top: 10px;">
-      <label for="manual-offset-input">Ingreso Manual de Segundos (SS):</label>
-      <div style="display: flex; gap: 8px;">
-        <input type="number" id="manual-offset-input" min="1" placeholder="Ej. 45" style="flex: 1;" inputmode="numeric">
-        <button class="header-btn" style="background: #e65100; color: white; border-color: #bf360c;" onclick="applyManualOffset()">+ Agregar SS</button>
-      </div>
-    </div>
-    <div class="modal-actions" style="margin-top: 15px;">
-      <button class="header-btn" style="width: 100%;" onclick="closeOffsetModal()">Cancelar</button>
-    </div>
-  </div>
-</div>
+  <script>
+    const STORAGE_KEY = 'swim-stopwatch-state-v1';
 
-<!-- Modal 1: Menú Principal de Gestión -->
-<div class="modal" id="file-options-modal">
-  <div class="modal-content" style="width: 340px;">
-    <h3>Gestión de Competencia</h3>
-    <div class="file-options-grid">
-      <button class="file-option-btn" onclick="closeFileModal(); openRosterModal();" style="color: #0288d1; border-color: #b3e5fc;">📥 Cargar Series y Nadadores</button>
-      <button class="file-option-btn" onclick="closeFileModal(); openSaveSyncModal();" style="color: #e65100; border-color: #ffe0b2;">💾 Guardar / Sincronizar</button>
-      <button class="file-option-btn" onclick="closeFileModal(); openSettings();" style="color: #37474f; border-color: #cfd8dc;">⚙️ Configuración del Torneo</button>
-      <button class="file-option-btn" onclick="closeFileModal(); clearLocalStorage();" style="color: #d32f2f; border-color: #ef9a9a;">🗑️ Limpiar Datos</button>
-    </div>
-    <div class="modal-actions" style="margin-top: 5px;">
-      <button class="header-btn" onclick="closeFileModal()">Cerrar</button>
-    </div>
-  </div>
-</div>
+    const state = {
+      heats: {},
+      currentHeatId: 1,
+      totalHeats: 1,
+      activeLanes: 6,
+      coachName: 'Juan Albarracin',
+      tournamentName: 'Torneo',
+      timerRunning: false,
+      elapsedMs: 0,
+      startedAt: 0,
+      intervalId: null,
+      selectedCard: null,
+      selectedSplit: null
+    };
 
-<!-- Modal 2: NUEVO Modal de Guardar y Sincronización -->
-<div class="modal" id="save-sync-modal">
-  <div class="modal-content" style="width: 400px;">
-    <h3>Guardar y Sincronizar</h3>
-    
-    <!-- Bloque Sincronización en la Nube -->
-    <div style="background: #e3f2fd; padding: 12px; border-radius: 6px; border: 1px solid #bbdefb; margin-bottom: 10px;">
-      <label for="input-webapp-url" style="font-size: 11px; font-weight: bold; color: #01579b; margin-bottom: 6px; display: block;">Google App Script URL (Sync):</label>
-      <input type="text" id="input-webapp-url" placeholder="https://script.google.com/.../exec" style="width: 100%; box-sizing: border-box; padding: 8px; border: 1px solid #90caf9; border-radius: 4px; font-size: 13px; margin-bottom: 8px;">
-      <button class="header-btn" style="width: 100%; background: #e65100; color: white; border-color: #bf360c;" onclick="applySyncUrlAndSync()">☁️ Forzar Sincronización Nube</button>
-    </div>
+    function formatMs(ms) {
+      const safe = Math.max(0, ms || 0);
+      const minutes = Math.floor(safe / 60000);
+      const seconds = Math.floor((safe % 60000) / 1000);
+      const hundredths = Math.floor((safe % 1000) / 10);
+      return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${String(hundredths).padStart(2, '0')}`;
+    }
 
-    <!-- Bloque Respaldos Locales -->
-    <div style="background: #f8f9fa; padding: 12px; border-radius: 6px; border: 1px solid #e9ecef; margin-bottom: 10px;">
-      <label style="font-size: 11px; font-weight: bold; color: #444; margin-bottom: 6px; display: block;">Respaldo Local (Archivos .json)</label>
-      <div style="display: flex; gap: 8px;">
-        <button class="header-btn" style="flex: 1; font-size: 13px;" onclick="closeSaveSyncModal(); exportSessionJSON()">💾 Guardar</button>
-        <button class="header-btn" style="flex: 1; font-size: 13px;" onclick="closeSaveSyncModal(); triggerImportSession()">📂 Cargar</button>
-      </div>
-    </div>
+    function formatShortMs(ms) {
+      if (ms == null || Number.isNaN(ms)) return '--:--';
+      const totalSec = Math.round(ms / 1000);
+      const minutes = Math.floor(totalSec / 60);
+      const seconds = totalSec % 60;
+      return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
 
-    <div class="modal-actions" style="margin-top: 10px;">
-      <button class="header-btn" onclick="closeSaveSyncModal()">Cerrar</button>
-    </div>
-  </div>
-</div>
-
-<!-- Modal 3: Modal de Configuración -->
-<div class="modal" id="settings-modal">
-  <div class="modal-content" style="max-height: 85vh; overflow-y: auto;">
-    <h3>Configuración del Torneo</h3>
-    
-    <div style="background: #f8f9fa; padding: 12px; border-radius: 6px; border: 1px solid #e9ecef; margin-bottom: 10px;">
-      <div class="form-group">
-        <label for="input-tournament-name">Nombre del Torneo:</label>
-        <input type="text" id="input-tournament-name">
-      </div>
-      <div class="form-group" style="margin-top: 8px;">
-        <label for="input-session-type">Jornada / Sesión:</label>
-        <select id="input-session-type">
-          <option value="Eliminatorias">Eliminatorias</option>
-          <option value="Finales">Finales</option>
-          <option value="Semifinales">Semifinales</option>
-          <option value="Controles">Control de Tiempos</option>
-        </select>
-      </div>
-      <div class="form-group" style="margin-top: 8px;">
-        <label for="input-coach">Entrenador Responsable:</label>
-        <input type="text" id="input-coach">
-      </div>
-    </div>
-
-    <div style="background: #e3edf7; padding: 12px; border-radius: 6px; border: 1px solid #bbdefb; margin-bottom: 5px;">
-      <div class="form-group">
-        <label for="input-lanes">Carriles Activos:</label>
-        <select id="input-lanes">
-          <option value="1">1 Carril</option>
-          <option value="2">2 Carriles</option>
-          <option value="3">3 Carriles</option>
-          <option value="4">4 Carriles</option>
-          <option value="5">5 Carriles</option>
-          <option value="6">6 Carriles</option>
-          <option value="8">8 Carriles</option>
-          <option value="10">10 Carriles</option>
-        </select>
-      </div>
-      <div class="form-group" style="margin-top: 8px;">
-        <label for="input-splits">Splits por Prueba:</label>
-        <input type="number" id="input-splits" min="1" max="25" inputmode="numeric">
-      </div>
-    </div>
-
-    <div class="modal-actions">
-      <button class="header-btn" onclick="closeSettings()">Cancelar</button>
-      <button class="header-btn" style="background: #2e7d32; color: white;" onclick="saveSettings()">Guardar Configuración</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal" id="roster-modal">
-  <div class="modal-content">
-    <h3>Sincronizar Series y Nadadores</h3>
-    <p style="font-size: 11px; color: #555;">Importa un archivo CSV, pega los datos o cárgalos directamente desde tu Google Sheets (Pestaña Programacion, Columna M).</p>
-    
-    <!-- Botón de Carga desde la Nube -->
-    <div class="form-group" style="background: #e3f2fd; padding: 12px; border-radius: 6px; border: 1px solid #bbdefb; margin-bottom: 5px;">
-      <label style="color: #01579b; font-size: 13px;">☁️ 1. Carga Inteligente desde la Nube:</label>
-      <button class="header-btn" id="btn-cloud-roster" style="width: 100%; background: #0288d1; color: white; border-color: #01579b; margin-top: 5px;" onclick="fetchRosterFromCloud()">
-        Descargar Programación de Hoy
-      </button>
-    </div>
-
-    <div style="text-align: center; font-size: 11px; color: #888; font-weight: bold; margin: 5px 0;">- O BIEN MANUALMENTE -</div>
-
-    <div class="form-group">
-      <label>2. Cargar archivo CSV / TXT:</label>
-      <input type="file" id="roster-file-input" accept=".csv, .txt">
-    </div>
-    <div class="form-group" style="margin-top: 5px;">
-      <label for="roster-text-input">3. Pegar Datos Directos:</label>
-      <textarea id="roster-text-input" rows="3" placeholder="Prueba, Distancia, Estilo, Serie, Carril, Nombre, Tiempo Sembrado, Marca Minima"></textarea>
-    </div>
-    <div class="modal-actions">
-      <button class="header-btn" onclick="closeRosterModal()">Cancelar</button>
-      <button class="header-btn" style="background: #2e7d32; color: white;" onclick="processRosterImport()">Sincronizar Manual</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal" id="image-modal">
-  <div class="modal-content" style="align-items: center;">
-    <img id="full-image-preview" src="" alt="Tablero Oficial">
-    <div class="modal-actions" style="width: 100%; justify-content: space-between;">
-      <button class="header-btn" style="background: #8e24aa; color: white;" onclick="downloadPhotoModalActive()">Descargar Foto</button>
-      <button class="header-btn" style="background: #555; color: white;" onclick="closePhotoModal()">Cerrar</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal" id="unhide-lane-modal">
-  <div class="modal-content" style="width: 400px;">
-    <h3>Carriles Ocultos</h3>
-    <p style="font-size: 11px; color: #555;">Selecciona los carriles que deseas volver a visualizar en esta serie:</p>
-    <div id="hidden-lanes-list-container" style="display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto; padding: 4px;"></div>
-    <div class="modal-actions">
-      <button class="header-btn" onclick="closeUnhideLaneModal()">Cerrar</button>
-      <button class="header-btn" style="background: #2e7d32; color: white;" onclick="restoreSelectedHiddenLanes()">Restaurar Seleccionados</button>
-    </div>
-  </div>
-</div>
-
-<script>
-/* ==========================================================================
-   CONFIGURACIÓN MAESTRA
-   ========================================================================== */
-// REEMPLAZA ESTA URL CON TU NUEVA IMPLEMENTACIÓN DE APPS SCRIPT
-const CONFIG_MASTER_URL = "https://script.google.com/macros/s/AKfycbxr8CjRjPWQPQ7A96FJg7lIGDdAu0BVi3hLq5VPg36dwqMoIgDFg3S1PiAuMN3MS6NQvA/exec";
-
-/* ==========================================================================
-   STATE MANAGEMENT (SwimStore) - Arquitectura Centralizada
-   ========================================================================== */
-const SwimStore = {
-  state: {
-    heatsData: {},
-    currentHeatId: 1,
-    totalHeatsCount: 1,
-    activeLanes: 6,
-    tournamentName: "Torneo",
-    sessionType: "Finales",
-    coachName: "Juan Albarracin",
-    googleWebAppUrl: CONFIG_MASTER_URL,
-    cardIdCounter: 0,
-    activeModalPhotoIndex: null,
-    hasUnsyncedChanges: false
-  }
-};
-
-/* ==========================================================================
-   ORDENAMIENTO NATURAL DE PRUEBAS
-   ========================================================================== */
-function getSortedHeatIds() {
-  return Object.keys(SwimStore.state.heatsData)
-    .map(id => parseInt(id))
-    .sort((a, b) => {
-      const nameA = SwimStore.state.heatsData[a].name;
-      const nameB = SwimStore.state.heatsData[b].name;
-      return nameA.localeCompare(nameB, undefined, { numeric: true, sensitivity: 'base' });
-    });
-}
-
-/* ==========================================================================
-   SINCRONIZACIÓN BIDIRECCIONAL AUTOMÁTICA Y ESTADO PENDIENTE
-   ========================================================================== */
-function normalizeText(text) {
-  if (!text) return "";
-  return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
-}
-
-function syncWithCloudBidirectional() {
-  if (!SwimStore.state.googleWebAppUrl || !navigator.onLine) return;
-
-  updateSyncDotState('pending');
-
-  let cleanHeatsData = {};
-  
-  if (SwimStore.state.hasUnsyncedChanges) {
-    saveCurrentHeatState();
-    for (let hId in SwimStore.state.heatsData) {
-      cleanHeatsData[hId] = {
-        name: SwimStore.state.heatsData[hId].name,
-        laneData: SwimStore.state.heatsData[hId].laneData
+    function createEmptyHeatState(name = 'Prueba 1', lanes = 6, splits = 4) {
+      return {
+        name,
+        activeLanes: lanes,
+        activeSplits: splits,
+        laneData: Array.from({ length: lanes }, (_, laneIndex) => ({
+          lane: laneIndex + 1,
+          swimmerName: '',
+          seedTime: '',
+          marcaMinima: '',
+          officialTime: '',
+          splits: Array.from({ length: splits }, () => null),
+          hidden: false
+        }))
       };
     }
-  }
 
-  const payload = {
-    tournamentName: SwimStore.state.tournamentName,
-    sessionType: SwimStore.state.sessionType,
-    coachName: SwimStore.state.coachName,
-    heats: cleanHeatsData 
-  };
-
-  const ind = document.getElementById('save-status-indicator');
-  if (ind) ind.innerText = SwimStore.state.hasUnsyncedChanges ? "☁️ Sincronizando cambios con la nube..." : "☁ Buscando actualizaciones de otros...";
-
-  fetch(SwimStore.state.googleWebAppUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain' },
-    body: JSON.stringify(payload)
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.result === "success" && data.rows) {
-      processCloudRows(data.rows);
-      SwimStore.state.hasUnsyncedChanges = false;
-      if (ind) ind.innerText = "✓ Sincronizado OK";
-      setTimeout(() => { updateSyncDotState('synced'); }, 3000);
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        heats: state.heats,
+        currentHeatId: state.currentHeatId,
+        totalHeats: state.totalHeats,
+        activeLanes: state.activeLanes,
+        coachName: state.coachName,
+        tournamentName: state.tournamentName,
+        elapsedMs: state.elapsedMs,
+        timerRunning: state.timerRunning
+      }));
     }
-  })
-  .catch(err => {
-    console.warn("Error en sync bidireccional:", err);
-    if (ind) ind.innerText = "⚠️ Modo Offline (Cambios pendientes)";
-    setTimeout(() => { updateSyncDotState('pending'); }, 3000);
-  });
-}
 
-function updateSyncDotState(status) {
-  const dot = document.getElementById('sync-status-dot');
-  if (!dot) return;
-  dot.className = ""; 
-  if (status === 'synced') dot.classList.add('synced');
-  else if (status === 'pending') dot.classList.add('pending');
-}
-
-function processCloudRows(rows) {
-  let dataChanged = false;
-  const localTournament = normalizeText(SwimStore.state.tournamentName);
-
-  rows.forEach(row => {
-    const tName = row[1];
-    const heatName = row[4];
-    const laneNum = parseInt(row[5], 10);
-    const swimmerName = row[6];
-    const splitsText = row[8];
-
-    if (normalizeText(tName) === localTournament) {
-      let targetHeatId = null;
-
-      for (let hId in SwimStore.state.heatsData) {
-        if (normalizeText(SwimStore.state.heatsData[hId].name) === normalizeText(heatName)) {
-          targetHeatId = hId;
-          break;
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) {
+          state.heats = {
+            1: createEmptyHeatState('Prueba 1', state.activeLanes, 4)
+          };
+          return;
         }
-      }
-
-      if (!targetHeatId) {
-        SwimStore.state.totalHeatsCount++;
-        targetHeatId = SwimStore.state.totalHeatsCount;
-        SwimStore.state.heatsData[targetHeatId] = createEmptyHeatState(heatName, 4);
-        dataChanged = true;
-      }
-
-      const heatObj = SwimStore.state.heatsData[targetHeatId];
-      
-      while (heatObj.laneData.length <= laneNum) {
-        heatObj.laneData.push({ lane: heatObj.laneData.length, swimmerName: "", seedTime: "", marcaMinima: "", splits: Array(heatObj.activeSplits || 4).fill(null), officialTime: "" });
-      }
-
-      let targetLaneObj = heatObj.laneData.find(l => l.lane === laneNum);
-      if (targetLaneObj) {
-        if (swimmerName && swimmerName !== `Carril ${laneNum}` && (!targetLaneObj.swimmerName || targetLaneObj.swimmerName === "")) {
-          targetLaneObj.swimmerName = swimmerName;
-          dataChanged = true;
-        }
-
-        if (splitsText) {
-          const splitStrings = splitsText.split(',').map(s => s.trim());
-          splitStrings.forEach((sStr, sIdx) => {
-            if (sStr !== "") {
-              const cleanStr = sStr.split(' ')[0];
-              const ms = parseTimeToMs(cleanStr);
-              if (!isNaN(ms) && ms > 0) {
-                if (!targetLaneObj.splits[sIdx] || targetLaneObj.splits[sIdx].totalMs === null) {
-                  SwimStore.state.cardIdCounter++;
-                  targetLaneObj.splits[sIdx] = { totalMs: ms, cardId: `card-${SwimStore.state.cardIdCounter}` };
-                  dataChanged = true;
-                }
-              }
-            }
-          });
-        }
-      }
-    }
-  });
-
-  if (dataChanged) {
-    loadHeatState(SwimStore.state.currentHeatId);
-    autoSaveToStorage();
-  }
-}
-
-const workerCode = `
-let timer = null;
-self.onmessage = function(e) {
-  if (e.data === 'start') {
-    if (!timer) { timer = setInterval(() => { self.postMessage('tick'); }, 10); }
-  } else if (e.data === 'stop') {
-    if (timer) { clearInterval(timer); timer = null; }
-  }
-};`;
-
-const blobWorker = new Blob([workerCode], { type: 'application/javascript' });
-const timerWorker = new Worker(URL.createObjectURL(blobWorker));
-
-let selectedSource = null;
-let lastBigButtonPressTime = 0;
-
-/* ==========================================================================
-   INDEXED DB (Patrón Outbox y Bóveda de Fotos v2)
-   ========================================================================== */
-const DB_NAME = 'SwimStopwatchDB';
-const DB_VERSION = 2; 
-let db = null;
-
-function initIndexedDB() {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
-    request.onerror = (event) => reject(event.target.error);
-    request.onsuccess = (event) => {
-      db = event.target.result;
-      resolve(db);
-    };
-    request.onupgradeneeded = (event) => {
-      const database = event.target.result;
-      if (!database.objectStoreNames.contains('sessions')) {
-        database.createObjectStore('sessions', { keyPath: 'id' });
-      }
-      if (!database.objectStoreNames.contains('outbox')) {
-        database.createObjectStore('outbox', { keyPath: 'id', autoIncrement: true });
-      }
-      if (!database.objectStoreNames.contains('photos')) {
-        database.createObjectStore('photos', { keyPath: 'id' });
-      }
-    };
-  });
-}
-
-function saveStateToIDB(stateObj) {
-  if (!db) return Promise.resolve();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(['sessions'], 'readwrite');
-    const store = transaction.objectStore('sessions');
-    stateObj.id = 'current_session';
-    const request = store.put(stateObj);
-    request.onsuccess = () => resolve();
-    request.onerror = (e) => reject(e.target.error);
-  });
-}
-
-function loadStateFromIDB() {
-  if (!db) return Promise.resolve(null);
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(['sessions'], 'readonly');
-    const store = transaction.objectStore('sessions');
-    const request = store.get('current_session');
-    request.onsuccess = (e) => resolve(e.target.result);
-    request.onerror = (e) => reject(e.target.error);
-  });
-}
-
-function addToOutbox(payload) {
-  if (!db) return Promise.resolve();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(['outbox'], 'readwrite');
-    const store = transaction.objectStore('outbox');
-    const request = store.add({ payload: payload, timestamp: Date.now() });
-    request.onsuccess = () => {
-      resolve();
-      processOutbox();
-    };
-    request.onerror = (e) => reject(e.target.error);
-  });
-}
-
-function savePhotoToIDB(photoObj) {
-  if (!db) return Promise.resolve();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(['photos'], 'readwrite');
-    const store = transaction.objectStore('photos');
-    const request = store.put(photoObj);
-    request.onsuccess = () => resolve();
-    request.onerror = (e) => reject(e.target.error);
-  });
-}
-
-function getPhotoFromIDB(photoId) {
-  if (!db) return Promise.resolve(null);
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(['photos'], 'readonly');
-    const store = transaction.objectStore('photos');
-    const request = store.get(photoId);
-    request.onsuccess = (e) => resolve(e.target.result);
-    request.onerror = (e) => reject(e.target.error);
-  });
-}
-
-function deletePhotoFromIDB(photoId) {
-  if (!db) return Promise.resolve();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(['photos'], 'readwrite');
-    const store = transaction.objectStore('photos');
-    const request = store.delete(photoId);
-    request.onsuccess = () => resolve();
-    request.onerror = (e) => reject(e.target.error);
-  });
-}
-
-function processOutbox() {
-  if (!db || !navigator.onLine || !SwimStore.state.googleWebAppUrl) return;
-  const transaction = db.transaction(['outbox'], 'readwrite');
-  const store = transaction.objectStore('outbox');
-  const request = store.getAll();
-  request.onsuccess = (e) => {
-    const items = e.target.result;
-    if (!items || items.length === 0) return;
-
-    const item = items[0];
-    fetch(SwimStore.state.googleWebAppUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify(item.payload)
-    })
-    .then(response => response.json()) 
-    .then(data => {
-      if (data.result === "success") {
-        const delTx = db.transaction(['outbox'], 'readwrite');
-        const delStore = delTx.objectStore('outbox');
-        delStore.delete(item.id);
-        delTx.oncomplete = () => {
-          const ind = document.getElementById('save-status-indicator');
-          if (ind) ind.innerText = "✓ Sincronizado con la nube (Outbox OK)";
-          processOutbox(); 
+        const parsed = JSON.parse(raw);
+        state.heats = parsed.heats || { 1: createEmptyHeatState('Prueba 1', state.activeLanes, 4) };
+        state.currentHeatId = parsed.currentHeatId || 1;
+        state.totalHeats = parsed.totalHeats || Object.keys(state.heats).length || 1;
+        state.activeLanes = parsed.activeLanes || state.activeLanes;
+        state.coachName = parsed.coachName || state.coachName;
+        state.tournamentName = parsed.tournamentName || state.tournamentName;
+        state.elapsedMs = parsed.elapsedMs || 0;
+        state.timerRunning = !!parsed.timerRunning;
+      } catch (error) {
+        console.error('Error loading state', error);
+        state.heats = {
+          1: createEmptyHeatState('Prueba 1', state.activeLanes, 4)
         };
       }
-    }).catch(err => {
-      console.warn("Fallo temporal de sincronización del Outbox, se reintentará:", err);
-    });
-  };
-}
+    }
 
-window.addEventListener('online', () => {
-  const ind = document.getElementById('save-status-indicator');
-  if (ind) ind.innerText = "🌐 Conectado - Sincronizando cola Outbox...";
-  processOutbox();
-});
+    function getCurrentHeat() {
+      return state.heats[state.currentHeatId] || createEmptyHeatState('Prueba 1', state.activeLanes, 4);
+    }
 
-window.addEventListener('offline', () => {
-  const ind = document.getElementById('save-status-indicator');
-  if (ind) ind.innerText = "💾 Modo Offline (Guardando seguro en IndexedDB)";
-});
+    function renderHeatSelect() {
+      const select = document.getElementById('heat-select');
+      const ids = Object.keys(state.heats).map(Number).sort((a, b) => a - b);
+      select.innerHTML = ids.map(id => `<option value="${id}">${state.heats[id].name}</option>`).join('');
+      select.value = String(state.currentHeatId);
+    }
 
-/* ==========================================================================
-   GESTIÓN DE FOTOGRAFÍAS (IndexedDB v2)
-   ========================================================================== */
-function triggerCameraInput() {
-  const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
-  if (!h) return;
-  if (!h.attachedPhotos) h.attachedPhotos = [];
-  
-  if (h.attachedPhotos.length >= 4) {
-    alert("Se ha alcanzado el límite máximo de 4 fotografías para esta prueba.");
-    return;
-  }
-  document.getElementById('camera-file-input').click();
-}
+    function renderCardsPool() {
+      const pool = document.getElementById('cards-pool');
+      const cards = [];
+      const ids = Object.keys(state.heats).map(Number).sort((a, b) => a - b);
+      ids.forEach(id => {
+        const heat = state.heats[id];
+        heat.laneData.forEach(lane => {
+          const time = lane.splits.filter(Boolean).map(s => s.totalMs || s).filter(v => v !== null && !Number.isNaN(v));
+          if (time.length) {
+            cards.push({ heatId: id, laneName: lane.lane, value: Math.max(...time) });
+          }
+        });
+      });
 
-function handlePhotoSelect(event) {
-  const file = event.target.files[0];
-  if (!file) return;
+      const values = cards.length ? cards : [{ heatId: state.currentHeatId, laneName: 1, value: state.elapsedMs }];
+      pool.innerHTML = values.map((card, idx) => `
+        <div class="time-card ${state.selectedCard === `${card.heatId}-${card.laneName}-${idx}` ? 'selected' : ''}" data-card="${card.heatId}-${card.laneName}-${idx}" data-value="${card.value}">
+          ${formatMs(card.value)}
+        </div>
+      `).join('');
 
-  const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
-  if (!h) return;
-  if (!h.attachedPhotos) h.attachedPhotos = [];
-
-  if (h.attachedPhotos.length >= 4) {
-    alert("Se ha alcanzado el límite máximo de 4 fotografías para esta prueba.");
-    event.target.value = "";
-    return;
-  }
-
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const photoId = 'photo_' + Date.now();
-    const photoDataUrl = e.target.result;
-    
-    const photoMeta = {
-      id: photoId,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-      name: file.name || `Foto_${h.attachedPhotos.length + 1}`
-    };
-    h.attachedPhotos.push(photoMeta);
-    
-    savePhotoToIDB({ id: photoId, dataUrl: photoDataUrl }).then(() => {
-      renderPhotoPanel();
-      autoSaveToStorage();
-    });
-  };
-  reader.readAsDataURL(file);
-  event.target.value = "";
-}
-
-async function renderPhotoPanel() {
-  const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
-  const panel = document.getElementById('photo-footer-panel');
-  const btnAdd = document.getElementById('btn-add-photo');
-  if (!h || !panel) return;
-
-  if (!h.attachedPhotos) h.attachedPhotos = [];
-
-  if (btnAdd) {
-    btnAdd.innerText = `📷 Tomar Foto (${h.attachedPhotos.length}/4)`;
-    btnAdd.style.opacity = h.attachedPhotos.length >= 4 ? "0.6" : "1";
-  }
-
-  if (h.attachedPhotos.length === 0) {
-    panel.style.display = 'none';
-    panel.innerHTML = '';
-    return;
-  }
-
-  panel.style.display = 'flex';
-  panel.innerHTML = '';
-
-  for (let idx = 0; idx < h.attachedPhotos.length; idx++) {
-    const photoMeta = h.attachedPhotos[idx];
-    const item = document.createElement('div');
-    item.className = 'footer-photo-item';
-
-    const img = document.createElement('img');
-    img.className = 'footer-photo-thumb';
-    img.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='50' height='50'><rect width='50' height='50' fill='#fdf2f2'/></svg>"; 
-    
-    if (photoMeta.dataUrl) {
-      img.src = photoMeta.dataUrl;
-    } else {
-      getPhotoFromIDB(photoMeta.id).then(photoData => {
-        if (photoData && photoData.dataUrl) img.src = photoData.dataUrl;
+      pool.querySelectorAll('.time-card').forEach(card => {
+        card.addEventListener('click', () => {
+          state.selectedCard = card.dataset.card;
+          state.selectedSplit = Number(card.dataset.value);
+          renderCardsPool();
+        });
       });
     }
 
-    img.onclick = () => viewPhoto(idx);
+    function renderLanes() {
+      const container = document.getElementById('lanes-container');
+      const heat = getCurrentHeat();
 
-    const details = document.createElement('div');
-    details.className = 'footer-photo-details';
+      if (!heat || !heat.laneData) {
+        container.innerHTML = '';
+        return;
+      }
 
-    const title = document.createElement('div');
-    title.className = 'footer-photo-title';
-    title.innerText = `Foto ${idx + 1} de 4 (${photoMeta.timestamp})`;
+      container.innerHTML = heat.laneData.map((lane, index) => {
+        const splitCells = Array.from({ length: heat.activeSplits || 4 }, (_, splitIndex) => {
+          const split = lane.splits[splitIndex];
+          if (!split) {
+            return `
+              <div class="split-cell ${state.selectedSplit === null ? '' : ''}" data-lane="${index}" data-split="${splitIndex}">
+                <div class="split-label">Split ${splitIndex + 1}</div>
+                <div class="split-total">--:--</div>
+              </div>
+            `;
+          }
+          return `
+            <div class="split-cell has-data ${state.selectedSplit === split.totalMs ? 'selected' : ''}" data-lane="${index}" data-split="${splitIndex}">
+              <div class="split-label">Split ${splitIndex + 1}</div>
+              <div class="split-total">${formatMs(split.totalMs)}</div>
+              <div class="split-partial">${split.partialMs ? formatMs(split.partialMs) : ''}</div>
+            </div>
+          `;
+        }).join('');
 
-    const filename = document.createElement('div');
-    filename.className = 'footer-photo-filename';
-    filename.innerText = photoMeta.name || `Foto_${idx + 1}`;
+        return `
+          <div class="lane-row">
+            <div class="lane-label">
+              <button class="lane-btn" data-lane-action="split" data-lane="${index}">▶</button>
+              <div class="lane-name">Carril ${lane.lane}</div>
+              <div class="lane-seed">${lane.seedTime || 'Seed: --:--'}</div>
+            </div>
+            <div class="split-row">${splitCells}</div>
+            <div class="meta-box">
+              <div class="meta-label">Total</div>
+              <div class="meta-value">${lane.totalMs ? formatMs(lane.totalMs) : '--:--'}</div>
+            </div>
+            <div class="meta-box">
+              <div class="meta-label">Oficial</div>
+              <div class="meta-value">${lane.officialTime || '--:--'}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
 
-    details.appendChild(title);
-    details.appendChild(filename);
+      container.querySelectorAll('.lane-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const laneIndex = Number(btn.dataset.lane);
+          recordSplit(laneIndex);
+        });
+      });
 
-    const actions = document.createElement('div');
-    actions.className = 'footer-photo-actions';
+      container.querySelectorAll('.split-cell').forEach(cell => {
+        cell.addEventListener('click', () => {
+          const laneIndex = Number(cell.dataset.lane);
+          const splitIndex = Number(cell.dataset.split);
+          state.selectedSplit = laneIndex + '-' + splitIndex;
+          recordSplit(laneIndex, splitIndex);
+        });
+      });
+    }
 
-    const btnView = document.createElement('button');
-    btnView.className = 'header-btn';
-    btnView.style.cssText = 'padding: 4px 8px; font-size: 11px;';
-    btnView.innerText = '👁️';
-    btnView.title = 'Ver fotografía';
-    btnView.onclick = () => viewPhoto(idx);
+    function updateClockDisplay() {
+      const clock = document.getElementById('clock-display');
+      clock.textContent = formatMs(state.elapsedMs);
+    }
 
-    const btnDel = document.createElement('button');
-    btnDel.className = 'header-btn';
-    btnDel.style.cssText = 'padding: 4px 8px; font-size: 11px; color: #d32f2f; border-color: #ef9a9a;';
-    btnDel.innerText = '🗑️';
-    btnDel.title = 'Eliminar fotografía';
-    btnDel.onclick = () => deletePhoto(idx);
+    function startTimer() {
+      if (state.timerRunning) return;
+      state.timerRunning = true;
+      state.startedAt = performance.now() - state.elapsedMs;
+      state.intervalId = setInterval(() => {
+        state.elapsedMs = performance.now() - state.startedAt;
+        updateClockDisplay();
+      }, 10);
+      document.getElementById('sync-dot').classList.add('pending');
+      saveState();
+    }
 
-    actions.appendChild(btnView);
-    actions.appendChild(btnDel);
+    function stopTimer() {
+      state.timerRunning = false;
+      clearInterval(state.intervalId);
+      state.intervalId = null;
+      document.getElementById('sync-dot').classList.remove('pending');
+      updateClockDisplay();
+      saveState();
+    }
 
-    item.appendChild(img);
-    item.appendChild(details);
-    item.appendChild(actions);
+    function addHeat() {
+      const nextId = state.totalHeats + 1;
+      state.heats[nextId] = createEmptyHeatState(`Prueba ${nextId}`, state.activeLanes, 4);
+      state.totalHeats = nextId;
+      state.currentHeatId = nextId;
+      renderHeatSelect();
+      renderLanes();
+      renderCardsPool();
+      saveState();
+    }
 
-    panel.appendChild(item);
-  }
-}
+    function renameCurrentHeat() {
+      const heat = getCurrentHeat();
+      const nextName = prompt('Nuevo nombre de la serie', heat.name || 'Prueba');
+      if (!nextName) return;
+      heat.name = nextName.trim() || heat.name;
+      renderHeatSelect();
+      saveState();
+    }
 
-let imgScale = 1, imgPointX = 0, imgPointY = 0;
-let imgPanning = false, imgStart = { x: 0, y: 0 }, imgInitialPinchDist = 0;
+    function switchHeat(id) {
+      const parsed = Number(id);
+      if (!Number.isFinite(parsed) || !state.heats[parsed]) return;
+      state.currentHeatId = parsed;
+      renderHeatSelect();
+      renderLanes();
+      renderCardsPool();
+      saveState();
+    }
 
-async function viewPhoto(index) {
-  const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
-  if (!h || !h.attachedPhotos || !h.attachedPhotos[index]) return;
-  SwimStore.state.activeModalPhotoIndex = index;
-  
-  const photoMeta = h.attachedPhotos[index];
-  let finalDataUrl = photoMeta.dataUrl;
-  
-  if (!finalDataUrl) {
-    const photoData = await getPhotoFromIDB(photoMeta.id);
-    if (photoData) finalDataUrl = photoData.dataUrl;
-  }
+    function previousHeat() {
+      const ids = Object.keys(state.heats).map(Number).sort((a, b) => a - b);
+      const currentIndex = ids.indexOf(state.currentHeatId);
+      if (currentIndex <= 0) return;
+      switchHeat(ids[currentIndex - 1]);
+    }
 
-  const modalImg = document.getElementById('full-image-preview');
-  modalImg.src = finalDataUrl || "";
-  
-  imgScale = 1;
-  imgPointX = 0;
-  imgPointY = 0;
-  modalImg.style.transform = `translate(0px, 0px) scale(1)`;
-  
-  document.getElementById('image-modal').classList.add('open');
-}
+    function nextHeat() {
+      const ids = Object.keys(state.heats).map(Number).sort((a, b) => a - b);
+      const currentIndex = ids.indexOf(state.currentHeatId);
+      if (currentIndex === -1 || currentIndex >= ids.length - 1) return;
+      switchHeat(ids[currentIndex + 1]);
+    }
 
-function closePhotoModal() {
-  SwimStore.state.activeModalPhotoIndex = null;
-  document.getElementById('image-modal').classList.remove('open');
-}
+    function recordSplit(laneIndex, splitIndex = null) {
+      const heat = getCurrentHeat();
+      const lane = heat.laneData[laneIndex];
+      if (!lane) return;
 
-async function downloadPhotoModalActive() {
-  const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
-  if (SwimStore.state.activeModalPhotoIndex === null || !h || !h.attachedPhotos[SwimStore.state.activeModalPhotoIndex]) return;
-  
-  const photoMeta = h.attachedPhotos[SwimStore.state.activeModalPhotoIndex];
-  let finalDataUrl = photoMeta.dataUrl;
-  
-  if (!finalDataUrl) {
-    const photoData = await getPhotoFromIDB(photoMeta.id);
-    if (photoData) finalDataUrl = photoData.dataUrl;
-  }
+      const value = state.timerRunning ? state.elapsedMs : (state.selectedSplit !== null ? Number(state.selectedSplit) : state.elapsedMs || 0);
+      const splitValue = value || 0;
 
-  if (!finalDataUrl) return;
+      if (splitIndex === null) {
+        const nextIndex = lane.splits.findIndex(entry => !entry);
+        const targetIndex = nextIndex === -1 ? lane.splits.length - 1 : nextIndex;
+        lane.splits[targetIndex] = {
+          totalMs: splitValue,
+          partialMs: lane.splits[targetIndex - 1] ? splitValue - lane.splits[targetIndex - 1].totalMs : splitValue
+        };
+      } else {
+        const previous = lane.splits[splitIndex - 1];
+        lane.splits[splitIndex] = {
+          totalMs: splitValue,
+          partialMs: previous ? splitValue - previous.totalMs : splitValue
+        };
+      }
 
-  const a = document.createElement('a');
-  a.href = finalDataUrl;
-  a.download = `${getFormattedTournamentLabel()}_${h.name.replace(/\s+/g, '_')}_Foto_${SwimStore.state.activeModalPhotoIndex + 1}.png`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-}
+      const total = lane.splits.filter(Boolean).reduce((sum, split) => sum + (split.totalMs || 0), 0);
+      lane.totalMs = total;
+      if (!lane.officialTime) lane.officialTime = formatMs(total);
 
-function deletePhoto(index) {
-  const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
-  if (!h || !h.attachedPhotos || !h.attachedPhotos[index]) return;
-  
-  if (confirm(`¿Eliminar la Foto ${index + 1}?`)) {
-    const photoId = h.attachedPhotos[index].id;
-    deletePhotoFromIDB(photoId).then(() => {
-      h.attachedPhotos.splice(index, 1);
-      renderPhotoPanel();
-      autoSaveToStorage();
-    });
-  }
-}
+      renderLanes();
+      renderCardsPool();
+      saveState();
+    }
 
-/* ==========================================================================
-   INICIALIZACIÓN Y CONFIGURACIÓN GLOBAL
-   ========================================================================== */
-function getFormattedTournamentLabel() {
-  const now = new Date();
-  const dd = String(now.getDate()).padStart(2, '0');
-  const mm = String(now.getMonth() + 1).padStart(2, '0');
-  const yy = String(now.getFullYear()).slice(-2);
-  return `${SwimStore.state.tournamentName}_${SwimStore.state.sessionType}_${dd}${mm}${yy}`;
-}
+    function handleBigButtonClick() {
+      if (state.timerRunning) {
+        stopTimer();
+      } else {
+        startTimer();
+      }
+    }
 
-async function initApp() {
-  timerWorker.onmessage = function(e) {
-    if (e.data === 'tick') updateClock();
-  };
-  setupHeatSelectDeleteEvents();
-  
-  try {
-    await initIndexedDB();
-  } catch(err) {
-    console.error("Fallo al iniciar IndexedDB", err);
-  }
+    function updateMetaDisplays() {
+      document.getElementById('coach-name').textContent = state.coachName;
+      document.getElementById('tournament-name').textContent = state.tournamentName;
+    }
 
-  const bigBtn = document.getElementById('big-button-container');
-  bigBtn.addEventListener('pointerdown', (e) => {
-    e.preventDefault();
-    handleBigButtonClick();
-  });
+    function init() {
+      loadState();
+      updateMetaDisplays();
+      renderHeatSelect();
+      renderLanes();
+      renderCardsPool();
+      updateClockDisplay();
 
-  // initialize default state
-  if (!SwimStore.state.heatsData[SwimStore.state.currentHeatId]) {
-    SwimStore.state.heatsData[SwimStore.state.currentHeatId] = createEmptyHeatState('Prueba 1', 2);
-  }
+      document.getElementById('add-heat-btn').addEventListener('click', addHeat);
+      document.getElementById('rename-heat-btn').addEventListener('click', renameCurrentHeat);
+      document.getElementById('prev-heat-btn').addEventListener('click', previousHeat);
+      document.getElementById('next-heat-btn').addEventListener('click', nextHeat);
+      document.getElementById('heat-select').addEventListener('change', (e) => switchHeat(e.target.value));
+      document.getElementById('stop-btn').addEventListener('click', stopTimer);
+      document.getElementById('clock-display').addEventListener('dblclick', () => {
+        state.elapsedMs = 0;
+        updateClockDisplay();
+        saveState();
+      });
 
-  updateMetaDisplays();
-  renderHeatSelectOptions();
-  loadHeatState(SwimStore.state.currentHeatId);
-  renderPhotoPanel();
-}
-</script>
+      const bigButton = document.createElement('button');
+      bigButton.textContent = 'START';
+      bigButton.style.position = 'fixed';
+      bigButton.style.right = '20px';
+      bigButton.style.top = '50%';
+      bigButton.style.transform = 'translateY(-50%)';
+      bigButton.style.width = '140px';
+      bigButton.style.height = '140px';
+      bigButton.style.borderRadius = '50%';
+      bigButton.style.border = 'none';
+      bigButton.style.background = '#2e7d32';
+      bigButton.style.color = '#fff';
+      bigButton.style.fontSize = '28px';
+      bigButton.style.fontWeight = '800';
+      bigButton.style.cursor = 'pointer';
+      bigButton.style.boxShadow = '0 8px 18px rgba(0,0,0,.2)';
+      bigButton.addEventListener('click', handleBigButtonClick);
+      document.body.appendChild(bigButton);
+    }
+
+    init();
+  </script>
 </body>
 </html>
