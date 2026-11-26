@@ -25,16 +25,20 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   const url = new URL(req.url);
 
-  // Deja pasar intactos los POST y peticiones a dominios externos (como tu Web App de Apps Script)
   if (req.method !== 'GET' || url.origin !== self.location.origin) {
     return;
   }
 
-  // Network-first para HTML / navegación: toma cambios nuevos si hay red, o usa caché si estás offline
   if (req.mode === 'navigate' || url.pathname.endsWith('.html')) {
     event.respondWith(
       fetch(req)
@@ -50,7 +54,6 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Cache-first para recursos estáticos del mismo origen
   event.respondWith(
     caches.match(req).then((cachedRes) => cachedRes || fetch(req))
   );
