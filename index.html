@@ -1832,6 +1832,15 @@ function fetchRosterFromCloud() {
           alert("La Columna M de la pestaña 'Programacion' está vacía.");
           return;
         }
+  if (data.tournamentName && data.tournamentName.trim() !== "") {
+  SwimStore.state.tournamentName = data.tournamentName.trim();
+
+  const tournamentInput = document.getElementById("input-tournament-name");
+  if (tournamentInput) tournamentInput.value = SwimStore.state.tournamentName;
+
+  updateMetaDisplays();
+  autoSaveToStorage();
+}      
         parseAndApplyRosterData(rawText);
       } else {
         alert("Error al obtener los datos de la nube: " + (data.error || data.message || "Respuesta desconocida."));
