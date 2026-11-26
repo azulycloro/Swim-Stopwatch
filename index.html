@@ -3,17 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Swim Stopwatch - Entrenadores Pro v4.1 (PWA Avanzada)</title>
-<!-- Enlace al Manifest para instalación PWA -->
+<title>Swim Stopwatch - Entrenadores Pro v5.0 (PWA Avanzada)</title>
 <link rel="manifest" href="manifest.json">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 body { display: flex; height: 100vh; background-color: #f0f4f8; overflow: hidden; touch-action: manipulation; }
 
-/* Estructura Principal */
 #main-container { flex: 1; display: flex; flex-direction: column; height: 100%; overflow: hidden; }
 
-/* Encabezado */
 #app-header {
   background: #fff;
   padding: 8px 12px;
@@ -42,7 +39,6 @@ body { display: flex; height: 100vh; background-color: #f0f4f8; overflow: hidden
 .header-btn.photo-btn { border-color: #8e24aa; color: #8e24aa; background: #f3e5f5; }
 .header-btn.photo-btn:hover { background: #e1bee7; }
 
-/* Botón STOP */
 .btn-stop { background: #d32f2f; color: white; border: 1px solid #b71c1c; font-weight: bold; padding: 10px 24px; border-radius: 8px; cursor: pointer; font-size: 14px; box-shadow: 1px 1px 3px rgba(0,0,0,0.2); flex-shrink: 0; min-width: 88px; min-height: 44px; }
 .btn-stop:hover { background: #b71c1c; }
 .btn-offset { background: #e65100; color: white; border: 1px solid #bf360c; font-weight: bold; padding: 10px 14px; border-radius: 8px; cursor: pointer; font-size: 13px; box-shadow: 1px 1px 3px rgba(0,0,0,0.2); flex-shrink: 0; min-height: 44px; }
@@ -53,7 +49,6 @@ body { display: flex; height: 100vh; background-color: #f0f4f8; overflow: hidden
 .fullscreen-btn { background: #f8f9fa; border: 1px solid #adb5bd; color: #495057; font-size: 12px; font-weight: bold; padding: 6px 10px; border-radius: 6px; cursor: pointer; transition: background 0.15s; min-height: 38px; min-width: 38px; display: inline-flex; align-items: center; justify-content: center; }
 .fullscreen-btn:hover { background: #e2e6ea; }
 
-/* Pool de Tarjetas */
 #cards-pool { background: #e3edf7; padding: 10px; min-height: 65px; display: flex; gap: 10px; align-items: center; overflow-x: auto; border-bottom: 2px dashed #90caf9; flex-shrink: 0; -webkit-overflow-scrolling: touch; touch-action: pan-x; cursor: pointer; }
 #cards-pool.drag-over { background: #bbdefb; border-color: #1976d2; border-style: solid; }
 .time-card { background: #fff; border: 2px solid #2196F3; border-radius: 6px; padding: 8px 12px; font-weight: bold; font-family: monospace; font-size: 16px; cursor: grab; box-shadow: 2px 2px 5px rgba(0,0,0,0.2); white-space: nowrap; flex-shrink: 0; will-change: transform; }
@@ -61,23 +56,19 @@ body { display: flex; height: 100vh; background-color: #f0f4f8; overflow: hidden
 .time-card.selected { border-color: #ff9800; background: #fff3e0; outline: 2px solid #ff9800; }
 .drag-clone { position: fixed; pointer-events: none; z-index: 9999; opacity: 0.85; transform: translate(-50%, -50%) scale(1.05); box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
 
-/* Área central */
 #center-split-wrapper { display: flex; flex: 1; overflow: hidden; position: relative; }
 #middle-main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 #content-scroll-area { flex: 1; overflow-y: auto; overflow-x: auto; padding: 10px; display: flex; flex-direction: column; gap: 12px; -webkit-overflow-scrolling: touch; }
 #lanes-container { display: flex; flex-direction: column; gap: 8px; width: max-content; min-width: 100%; }
 .lane-row { display: flex; align-items: stretch; gap: 8px; background: #fff; padding: 6px 8px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); width: 100%; overflow: visible; }
 
-/* Grupo Sticky para Botón Play y Cabecera */
 .lane-sticky-group { display: flex; gap: 4px; position: sticky; left: 0; z-index: 10; flex-shrink: 0; align-items: stretch; }
 
-/* Botón Split Individual por Carril */
 .lane-play-btn { background: white; border: 1px solid transparent; color: #29b6f6; font-size: 28px; font-weight: bold; width: 52px; height: 52px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; opacity: 1; transition: opacity 0.15s, background 0.15s; border-radius: 4px; }
 .lane-play-btn:hover { opacity: 1; background: #f5f5f5; }
 
 .lane-header { font-weight: bold; width: 130px; min-width: 130px; max-width: 130px; min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 6px; flex-shrink: 0; padding: 4px; text-align: center; font-size: 10px; cursor: pointer; word-break: break-word; overflow: hidden; line-height: 1.1; box-shadow: 2px 0 5px rgba(0,0,0,0.05); transition: background-color 0.2s, border-color 0.2s; }
 
-/* Estilos dinámicos de semáforo de ritmo */
 .lane-header.seed-yellow, .official-time-container.seed-yellow, .total-time-container.seed-yellow { background: #fff59d; border: 1px solid #fbc02d; color: #000; }
 .lane-header.seed-yellow .lane-seed { color: #d84315; }
 .lane-header.seed-green, .official-time-container.seed-green, .total-time-container.seed-green { background: #39FF14; border: 1px solid #2ecc71; color: #000; }
@@ -88,7 +79,6 @@ body { display: flex; height: 100vh; background-color: #f0f4f8; overflow: hidden
 .lane-seed { font-size: 9px; font-weight: bold; margin-top: 2px; }
 .splits-row { display: flex; gap: 6px; flex-shrink: 0; align-items: center; width: max-content; }
 
-/* Celdas Split */
 .split-cell { border: 2px dashed #b0bec5; border-radius: 6px; width: 95px; min-width: 95px; height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #fafafa; position: relative; flex-shrink: 0; cursor: pointer; }
 .split-cell.drag-over { background: #e3f2fd; border-color: #2196F3; }
 .split-cell.has-data { border-style: solid; border-color: #4caf50; background: #e8f5e9; cursor: grab; transition: transform 0.1s; will-change: transform; }
@@ -98,12 +88,10 @@ body { display: flex; height: 100vh; background-color: #f0f4f8; overflow: hidden
 .split-total { font-size: 12px; font-weight: bold; font-family: monospace; color: #2e7d32; pointer-events: none; }
 .split-partial { font-size: 10px; font-family: monospace; color: #1565c0; font-weight: bold; pointer-events: none; }
 
-/* Caja de Tiempo Total / Proyección */
 .total-time-container { border: 2px solid #0288d1; background: #e1f5fe; border-radius: 6px; padding: 3px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; width: 105px; min-width: 105px; max-width: 105px; height: 52px; flex-shrink: 0; transition: background-color 0.2s, border-color 0.2s; }
 .total-label { font-size: 9px; font-weight: bold; color: #01579b; text-transform: uppercase; }
 .total-display { font-size: 12px; font-weight: bold; font-family: monospace; color: #0277bd; text-align: center; }
 
-/* Caja de Tiempo Oficial */
 .official-time-container { border: 2px solid #7e57c2; background: #f3e5f5; border-radius: 6px; padding: 3px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; width: 115px; min-width: 115px; max-width: 115px; height: 52px; flex-shrink: 0; transition: background-color 0.2s, border-color 0.2s; }
 .official-label { font-size: 9px; font-weight: bold; color: #512da8; text-transform: uppercase; }
 .official-input-group { display: flex; width: 100%; gap: 2px; }
@@ -112,11 +100,9 @@ body { display: flex; height: 100vh; background-color: #f0f4f8; overflow: hidden
 .btn-adjust { background: #7e57c2; color: white; border: none; padding: 2px 4px; border-radius: 4px; font-size: 9px; font-weight: bold; cursor: pointer; width: 100%; }
 .btn-adjust:hover { background: #512da8; }
 
-/* Botones personalizados de ocultar carriles */
 .lane-hide-btn { background: transparent; border: 1px solid transparent; color: #29b6f6; font-size: 30px; font-weight: bold; width: 44px; height: 52px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; opacity: 0.5; transition: opacity 0.15s, background 0.15s; border-radius: 4px; align-self: flex-start; }
 .lane-hide-btn:hover { opacity: 1; background: rgba(0,0,0,0.06); }
 
-/* Caja de Marca Mínima */
 .min-mark-container { background: white; border: 1px solid transparent; color: #0d47a1; font-weight: bold; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 6px; width: 105px; min-width: 105px; height: 52px; flex-shrink: 0; transition: background-color 0.2s, border-color 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
 .min-mark-label { font-size: 9px; text-transform: uppercase; text-align: center; }
 .min-mark-display { font-size: 12px; font-family: monospace; text-align: center; }
@@ -124,7 +110,6 @@ body { display: flex; height: 100vh; background-color: #f0f4f8; overflow: hidden
 .min-mark-container.seed-green { background: #39FF14; border-color: #2ecc71; color: #000; }
 .min-mark-container.seed-red { background: #ff9eaa; border-color: #e53935; color: #000; }
 
-/* Panel Fotográfico Integrado */
 #photo-bottom-zone { display: flex; align-items: center; justify-content: space-between; background: #fbf5fc; border: 1px solid #e1bee7; padding: 8px 12px; border-radius: 8px; margin-top: 5px; }
 #photo-footer-panel { display: none; flex-direction: column; gap: 8px; background: #fff; border: 2px dashed #8e24aa; border-radius: 8px; padding: 10px; margin-top: 5px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
 .footer-photo-item { display: flex; align-items: center; gap: 10px; background: #fdf2f2; padding: 6px; border-radius: 6px; border: 1px solid #d1c4e9; }
@@ -134,13 +119,11 @@ body { display: flex; height: 100vh; background-color: #f0f4f8; overflow: hidden
 .footer-photo-filename { font-size: 10px; color: #666; font-family: monospace; }
 .footer-photo-actions { display: flex; gap: 6px; margin-left: auto; }
 
-/* Botón Lateral */
 #big-button-container { width: 160px; background: #2e7d32; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: background 0.1s; flex-shrink: 0; height: 100%; touch-action: manipulation; }
 #big-button-container:hover { background: #1b5e20; }
 #big-button-container:active { background: #0d3b13; }
 #big-button-label { color: white; font-size: 32px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; writing-mode: vertical-lr; text-orientation: mixed; transform: rotate(180deg); pointer-events: none; }
 
-/* Panel Inferior de Metadatos */
 #app-footer-info {
   background: #2c3e50;
   color: #ecf0f1;
@@ -157,6 +140,10 @@ body { display: flex; height: 100vh; background-color: #f0f4f8; overflow: hidden
 .footer-meta-item { display: flex; align-items: center; gap: 6px; }
 .footer-meta-item strong { color: #3498db; }
 #save-status-indicator { font-size: 11px; color: #2ecc71; font-weight: bold; }
+#sync-status-dot { width: 10px; height: 10px; border-radius: 50%; background: #e74c3c; display: inline-block; transition: background 0.3s; }
+#sync-status-dot.synced { background: #2ecc71; }
+#sync-status-dot.pending { background: #f39c12; animation: pulse 1.5s infinite; }
+@keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
 
 @media (max-width: 900px) {
   #big-button-container { width: 110px; }
@@ -164,13 +151,8 @@ body { display: flex; height: 100vh; background-color: #f0f4f8; overflow: hidden
   .header-btn { padding: 8px; font-size: 14px; }
   #clock-display { font-size: 20px; }
   #app-footer-info { font-size: 10px; padding: 4px 8px; }
-  #sync-status-dot { width: 10px; height: 10px; border-radius: 50%; background: #e74c3c; display: inline-block; transition: background 0.3s; }
-  #sync-status-dot.synced { background: #2ecc71; }
-  #sync-status-dot.pending { background: #f39c12; animation: pulse 1.5s infinite; }
-  @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
 }
 
-/* Modales */
 .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 10000; }
 .modal.open { display: flex; }
 .modal-content { background: white; padding: 25px; border-radius: 10px; width: 480px; display: flex; flex-direction: column; gap: 15px; max-width: 90vw; }
@@ -182,23 +164,23 @@ body { display: flex; height: 100vh; background-color: #f0f4f8; overflow: hidden
 .file-options-grid { display: flex; flex-direction: column; gap: 10px; margin-top: 5px; }
 .file-option-btn { width: 100%; padding: 12px 16px; text-align: left; border: 1px solid #ccc; background: #fff; font-size: 14px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 10px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: background 0.1s; }
 .file-option-btn:hover { background-color: #f8f9fa; }
-#image-modal.modal-content { 
-  width: auto; 
-  max-width: 90vw; 
-  max-height: 90vh; 
-  padding: 15px; 
-  background: #000; 
-  overflow: hidden; 
+#image-modal.modal-content {
+  width: auto;
+  max-width: 90vw;
+  max-height: 90vh;
+  padding: 15px;
+  background: #000;
+  overflow: hidden;
   position: relative;
-  touch-action: none; 
+  touch-action: none;
 }
-#full-image-preview { 
-  max-width: 100%; 
-  max-height: 75vh; 
-  object-fit: contain; 
-  transform-origin: 0 0; 
-  will-change: transform; 
-  cursor: grab; 
+#full-image-preview {
+  max-width: 100%;
+  max-height: 75vh;
+  object-fit: contain;
+  transform-origin: 0 0;
+  will-change: transform;
+  cursor: grab;
 }
 #full-image-preview:active {
   cursor: grabbing;
@@ -233,13 +215,12 @@ body { display: flex; height: 100vh; background-color: #f0f4f8; overflow: hidden
       <div id="cards-pool" onclick="handlePoolTap()" ondragover="allowDrop(event)" ondragenter="this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="dropToPool(event)" title="Haz clic o arrastra aquí para devolver splits al pool"></div>
       <div id="content-scroll-area">
         <main id="lanes-container"></main>
-        
+
         <div id="photo-bottom-zone">
           <button class="header-btn photo-btn" id="btn-add-photo" onclick="triggerCameraInput()">📷 Tomar Foto (0/4)</button>
           <input type="file" id="camera-file-input" accept="image/*" capture="environment" style="display: none;" onchange="handlePhotoSelect(event)">
         </div>
         <div id="photo-footer-panel"></div>
-
       </div>
     </div>
     <div id="big-button-container">
@@ -247,7 +228,7 @@ body { display: flex; height: 100vh; background-color: #f0f4f8; overflow: hidden
     </div>
   </div>
 
-<footer id="app-footer-info">
+  <footer id="app-footer-info">
     <div class="footer-meta-item">
       <span>Entrenador:</span>
       <strong id="coach-name-display">Juan Albarracin</strong>
@@ -258,15 +239,22 @@ body { display: flex; height: 100vh; background-color: #f0f4f8; overflow: hidden
     </div>
     <div class="footer-meta-item">
       <span>App:</span>
-      <strong>v4.1 (Pro)</strong>
+      <strong>v5.0 (Pro)</strong>
     </div>
     <div style="display: flex; align-items: center; gap: 6px;">
       <span id="sync-status-dot" class="synced" title="Estado de sincronización"></span>
       <div id="save-status-indicator">✓ Sincronización Offline-First activa</div>
     </div>
   </footer>
+</div>
 
-<!-- Modales -->
+<div id="sw-update-banner" style="display:none; position:fixed; bottom:36px; left:12px; right:12px; z-index:9999; background:#1e293b; color:#f8fafc; border:2px solid #f59e0b; border-radius:8px; padding:8px 12px; align-items:center; justify-content:space-between; gap:10px; box-shadow:0 4px 12px rgba(0,0,0,0.25);">
+  <span style="font-size:12px; font-weight:bold;">Nueva versión de Swim Stopwatch lista.</span>
+  <button id="sw-reload-btn" type="button" style="background:#f59e0b; color:#0f172a; border:none; border-radius:6px; padding:6px 12px; font-weight:bold; font-size:12px; cursor:pointer;">
+    Actualizar ahora
+  </button>
+</div>
+
 <div class="modal" id="offset-modal">
   <div class="modal-content" style="width: 360px;">
     <h3>Compensar Inicio Tardío</h3>
@@ -291,7 +279,6 @@ body { display: flex; height: 100vh; background-color: #f0f4f8; overflow: hidden
   </div>
 </div>
 
-<!-- Modal 1: Menú Principal de Gestión -->
 <div class="modal" id="file-options-modal">
   <div class="modal-content" style="width: 340px;">
     <h3>Gestión de Competencia</h3>
@@ -307,19 +294,14 @@ body { display: flex; height: 100vh; background-color: #f0f4f8; overflow: hidden
   </div>
 </div>
 
-<!-- Modal 2: NUEVO Modal de Guardar y Sincronización -->
 <div class="modal" id="save-sync-modal">
   <div class="modal-content" style="width: 400px;">
     <h3>Guardar y Sincronizar</h3>
-    
-    <!-- Bloque Sincronización en la Nube -->
     <div style="background: #e3f2fd; padding: 12px; border-radius: 6px; border: 1px solid #bbdefb; margin-bottom: 10px;">
       <label for="input-webapp-url" style="font-size: 11px; font-weight: bold; color: #01579b; margin-bottom: 6px; display: block;">Google App Script URL (Sync):</label>
       <input type="text" id="input-webapp-url" placeholder="https://script.google.com/.../exec" style="width: 100%; box-sizing: border-box; padding: 8px; border: 1px solid #90caf9; border-radius: 4px; font-size: 11px; margin-bottom: 8px; font-family: monospace;">
       <button class="header-btn" style="width: 100%; background: #e65100; color: white; border-color: #bf360c;" onclick="applySyncUrlAndSync()">☁️ Forzar Sincronización Nube</button>
     </div>
-
-    <!-- Bloque Respaldos Locales -->
     <div style="background: #f8f9fa; padding: 12px; border-radius: 6px; border: 1px solid #e9ecef; margin-bottom: 10px;">
       <label style="font-size: 11px; font-weight: bold; color: #444; margin-bottom: 6px; display: block;">Respaldo Local (Archivos .json)</label>
       <div style="display: flex; gap: 8px;">
@@ -327,18 +309,15 @@ body { display: flex; height: 100vh; background-color: #f0f4f8; overflow: hidden
         <button class="header-btn" style="flex: 1; font-size: 13px;" onclick="closeSaveSyncModal(); triggerImportSession()">📂 Cargar</button>
       </div>
     </div>
-
     <div class="modal-actions" style="margin-top: 10px;">
       <button class="header-btn" onclick="closeSaveSyncModal()">Cerrar</button>
     </div>
   </div>
 </div>
 
-<!-- Modal 3: Modal de Configuración -->
 <div class="modal" id="settings-modal">
   <div class="modal-content" style="max-height: 85vh; overflow-y: auto;">
     <h3>Configuración del Torneo</h3>
-    
     <div style="background: #f8f9fa; padding: 12px; border-radius: 6px; border: 1px solid #e9ecef; margin-bottom: 10px;">
       <div class="form-group">
         <label for="input-tournament-name">Nombre del Torneo:</label>
@@ -358,7 +337,6 @@ body { display: flex; height: 100vh; background-color: #f0f4f8; overflow: hidden
         <input type="text" id="input-coach">
       </div>
     </div>
-
     <div style="background: #e3edf7; padding: 12px; border-radius: 6px; border: 1px solid #bbdefb; margin-bottom: 5px;">
       <div class="form-group">
         <label for="input-lanes">Carriles Activos:</label>
@@ -378,7 +356,6 @@ body { display: flex; height: 100vh; background-color: #f0f4f8; overflow: hidden
         <input type="number" id="input-splits" min="1" max="25" inputmode="numeric">
       </div>
     </div>
-
     <div class="modal-actions">
       <button class="header-btn" onclick="closeSettings()">Cancelar</button>
       <button class="header-btn" style="background: #2e7d32; color: white;" onclick="saveSettings()">Guardar Configuración</button>
@@ -390,17 +367,13 @@ body { display: flex; height: 100vh; background-color: #f0f4f8; overflow: hidden
   <div class="modal-content">
     <h3>Sincronizar Series y Nadadores</h3>
     <p style="font-size: 11px; color: #555;">Importa un archivo CSV, pega los datos o cárgalos directamente desde tu Google Sheets (Pestaña Programacion, Columna M).</p>
-    
-    <!-- Botón de Carga desde la Nube -->
     <div class="form-group" style="background: #e3f2fd; padding: 12px; border-radius: 6px; border: 1px solid #bbdefb; margin-bottom: 5px;">
       <label style="color: #01579b; font-size: 13px;">☁️ 1. Carga Inteligente desde la Nube:</label>
       <button class="header-btn" id="btn-cloud-roster" style="width: 100%; background: #0288d1; color: white; border-color: #01579b; margin-top: 5px;" onclick="fetchRosterFromCloud()">
         Descargar Programación de Hoy
       </button>
     </div>
-
     <div style="text-align: center; font-size: 11px; color: #888; font-weight: bold; margin: 5px 0;">- O BIEN MANUALMENTE -</div>
-
     <div class="form-group">
       <label>2. Cargar archivo CSV / TXT:</label>
       <input type="file" id="roster-file-input" accept=".csv, .txt">
@@ -439,15 +412,8 @@ body { display: flex; height: 100vh; background-color: #f0f4f8; overflow: hidden
 </div>
 
 <script>
-/* ==========================================================================
-   CONFIGURACIÓN MAESTRA
-   ========================================================================== */
-// REEMPLAZA ESTA URL CON TU NUEVA IMPLEMENTACIÓN DE APPS SCRIPT
 const CONFIG_MASTER_URL = "https://script.google.com/macros/s/AKfycbzZdPeFatshoeMUr0KXZBC_OkesEfsK3dSg2orHMoPE0rEWU9yhuiVdkZWNOKghoewgnA/exec";
 
-/* ==========================================================================
-   STATE MANAGEMENT (SwimStore) - Arquitectura Centralizada
-   ========================================================================== */
 const SwimStore = {
   state: {
     heatsData: {},
@@ -464,9 +430,18 @@ const SwimStore = {
   }
 };
 
-/* ==========================================================================
-   ORDENAMIENTO NATURAL DE PRUEBAS
-   ========================================================================== */
+function normalizeText(text) {
+  if (!text) return "";
+  return String(text)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/ñ/g, "n")
+    .replace(/Ñ/g, "N")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toUpperCase();
+}
+
 function getSortedHeatIds() {
   return Object.keys(SwimStore.state.heatsData)
     .map(id => parseInt(id))
@@ -477,21 +452,12 @@ function getSortedHeatIds() {
     });
 }
 
-/* ==========================================================================
-   SINCRONIZACIÓN BIDIRECCIONAL AUTOMÁTICA Y ESTADO PENDIENTE
-   ========================================================================== */
-function normalizeText(text) {
-  if (!text) return "";
-  return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
-}
-
 function syncWithCloudBidirectional() {
   if (!SwimStore.state.googleWebAppUrl || !navigator.onLine) return;
 
   updateSyncDotState('pending');
-
   let cleanHeatsData = {};
-  
+
   if (SwimStore.state.hasUnsyncedChanges) {
     saveCurrentHeatState();
     for (let hId in SwimStore.state.heatsData) {
@@ -506,7 +472,7 @@ function syncWithCloudBidirectional() {
     tournamentName: SwimStore.state.tournamentName,
     sessionType: SwimStore.state.sessionType,
     coachName: SwimStore.state.coachName,
-    heats: cleanHeatsData 
+    heats: cleanHeatsData
   };
 
   const ind = document.getElementById('save-status-indicator');
@@ -536,7 +502,7 @@ function syncWithCloudBidirectional() {
 function updateSyncDotState(status) {
   const dot = document.getElementById('sync-status-dot');
   if (!dot) return;
-  dot.className = ""; 
+  dot.className = "";
   if (status === 'synced') dot.classList.add('synced');
   else if (status === 'pending') dot.classList.add('pending');
 }
@@ -570,14 +536,13 @@ function processCloudRows(rows) {
       }
 
       const heatObj = SwimStore.state.heatsData[targetHeatId];
-      
       while (heatObj.laneData.length <= laneNum) {
         heatObj.laneData.push({ lane: heatObj.laneData.length, swimmerName: "", seedTime: "", marcaMinima: "", splits: Array(heatObj.activeSplits || 4).fill(null), officialTime: "" });
       }
 
       let targetLaneObj = heatObj.laneData.find(l => l.lane === laneNum);
       if (targetLaneObj) {
-        if (swimmerName && swimmerName !== `Carril ${laneNum}` && (!targetLaneObj.swimmerName || targetLaneObj.swimmerName === "")) {
+        if (swimmerName && normalizeText(swimmerName) !== normalizeText(`Carril ${laneNum}`) && (!targetLaneObj.swimmerName || targetLaneObj.swimmerName === "")) {
           targetLaneObj.swimmerName = swimmerName;
           dataChanged = true;
         }
@@ -624,11 +589,8 @@ const timerWorker = new Worker(URL.createObjectURL(blobWorker));
 let selectedSource = null;
 let lastBigButtonPressTime = 0;
 
-/* ==========================================================================
-   INDEXED DB (Patrón Outbox y Bóveda de Fotos v2)
-   ========================================================================== */
 const DB_NAME = 'SwimStopwatchDB';
-const DB_VERSION = 2; 
+const DB_VERSION = 2;
 let db = null;
 
 function initIndexedDB() {
@@ -673,20 +635,6 @@ function loadStateFromIDB() {
     const store = transaction.objectStore('sessions');
     const request = store.get('current_session');
     request.onsuccess = (e) => resolve(e.target.result);
-    request.onerror = (e) => reject(e.target.error);
-  });
-}
-
-function addToOutbox(payload) {
-  if (!db) return Promise.resolve();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(['outbox'], 'readwrite');
-    const store = transaction.objectStore('outbox');
-    const request = store.add({ payload: payload, timestamp: Date.now() });
-    request.onsuccess = () => {
-      resolve();
-      processOutbox();
-    };
     request.onerror = (e) => reject(e.target.error);
   });
 }
@@ -739,7 +687,7 @@ function processOutbox() {
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify(item.payload)
     })
-    .then(response => response.json()) 
+    .then(response => response.json())
     .then(data => {
       if (data.result === "success") {
         const delTx = db.transaction(['outbox'], 'readwrite');
@@ -748,11 +696,11 @@ function processOutbox() {
         delTx.oncomplete = () => {
           const ind = document.getElementById('save-status-indicator');
           if (ind) ind.innerText = "✓ Sincronizado con la nube (Outbox OK)";
-          processOutbox(); 
+          processOutbox();
         };
       }
     }).catch(err => {
-      console.warn("Fallo temporal de sincronización del Outbox, se reintentará:", err);
+      console.warn("Fallo temporal de sincronización del Outbox:", err);
     });
   };
 }
@@ -768,14 +716,10 @@ window.addEventListener('offline', () => {
   if (ind) ind.innerText = "💾 Modo Offline (Guardando seguro en IndexedDB)";
 });
 
-/* ==========================================================================
-   GESTIÓN DE FOTOGRAFÍAS (IndexedDB v2)
-   ========================================================================== */
 function triggerCameraInput() {
   const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
   if (!h) return;
   if (!h.attachedPhotos) h.attachedPhotos = [];
-  
   if (h.attachedPhotos.length >= 4) {
     alert("Se ha alcanzado el límite máximo de 4 fotografías para esta prueba.");
     return;
@@ -790,7 +734,6 @@ function handlePhotoSelect(event) {
   const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
   if (!h) return;
   if (!h.attachedPhotos) h.attachedPhotos = [];
-
   if (h.attachedPhotos.length >= 4) {
     alert("Se ha alcanzado el límite máximo de 4 fotografías para esta prueba.");
     event.target.value = "";
@@ -801,14 +744,13 @@ function handlePhotoSelect(event) {
   reader.onload = function(e) {
     const photoId = 'photo_' + Date.now();
     const photoDataUrl = e.target.result;
-    
     const photoMeta = {
       id: photoId,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
       name: file.name || `Foto_${h.attachedPhotos.length + 1}`
     };
     h.attachedPhotos.push(photoMeta);
-    
+
     savePhotoToIDB({ id: photoId, dataUrl: photoDataUrl }).then(() => {
       renderPhotoPanel();
       autoSaveToStorage();
@@ -823,7 +765,6 @@ async function renderPhotoPanel() {
   const panel = document.getElementById('photo-footer-panel');
   const btnAdd = document.getElementById('btn-add-photo');
   if (!h || !panel) return;
-
   if (!h.attachedPhotos) h.attachedPhotos = [];
 
   if (btnAdd) {
@@ -847,8 +788,8 @@ async function renderPhotoPanel() {
 
     const img = document.createElement('img');
     img.className = 'footer-photo-thumb';
-    img.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='50' height='50'><rect width='50' height='50' fill='#fdf2f2'/></svg>"; 
-    
+    img.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='50' height='50'><rect width='50' height='50' fill='#fdf2f2'/></svg>";
+
     if (photoMeta.dataUrl) {
       img.src = photoMeta.dataUrl;
     } else {
@@ -856,7 +797,6 @@ async function renderPhotoPanel() {
         if (photoData && photoData.dataUrl) img.src = photoData.dataUrl;
       });
     }
-
     img.onclick = () => viewPhoto(idx);
 
     const details = document.createElement('div');
@@ -880,14 +820,12 @@ async function renderPhotoPanel() {
     btnView.className = 'header-btn';
     btnView.style.cssText = 'padding: 4px 8px; font-size: 11px;';
     btnView.innerText = '👁️';
-    btnView.title = 'Ver fotografía';
     btnView.onclick = () => viewPhoto(idx);
 
     const btnDel = document.createElement('button');
     btnDel.className = 'header-btn';
     btnDel.style.cssText = 'padding: 4px 8px; font-size: 11px; color: #d32f2f; border-color: #ef9a9a;';
     btnDel.innerText = '🗑️';
-    btnDel.title = 'Eliminar fotografía';
     btnDel.onclick = () => deletePhoto(idx);
 
     actions.appendChild(btnView);
@@ -908,10 +846,9 @@ async function viewPhoto(index) {
   const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
   if (!h || !h.attachedPhotos || !h.attachedPhotos[index]) return;
   SwimStore.state.activeModalPhotoIndex = index;
-  
+
   const photoMeta = h.attachedPhotos[index];
   let finalDataUrl = photoMeta.dataUrl;
-  
   if (!finalDataUrl) {
     const photoData = await getPhotoFromIDB(photoMeta.id);
     if (photoData) finalDataUrl = photoData.dataUrl;
@@ -919,12 +856,10 @@ async function viewPhoto(index) {
 
   const modalImg = document.getElementById('full-image-preview');
   modalImg.src = finalDataUrl || "";
-  
   imgScale = 1;
   imgPointX = 0;
   imgPointY = 0;
   modalImg.style.transform = `translate(0px, 0px) scale(1)`;
-  
   document.getElementById('image-modal').classList.add('open');
 }
 
@@ -936,15 +871,13 @@ function closePhotoModal() {
 async function downloadPhotoModalActive() {
   const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
   if (SwimStore.state.activeModalPhotoIndex === null || !h || !h.attachedPhotos[SwimStore.state.activeModalPhotoIndex]) return;
-  
+
   const photoMeta = h.attachedPhotos[SwimStore.state.activeModalPhotoIndex];
   let finalDataUrl = photoMeta.dataUrl;
-  
   if (!finalDataUrl) {
     const photoData = await getPhotoFromIDB(photoMeta.id);
     if (photoData) finalDataUrl = photoData.dataUrl;
   }
-
   if (!finalDataUrl) return;
 
   const a = document.createElement('a');
@@ -958,7 +891,7 @@ async function downloadPhotoModalActive() {
 function deletePhoto(index) {
   const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
   if (!h || !h.attachedPhotos || !h.attachedPhotos[index]) return;
-  
+
   if (confirm(`¿Eliminar la Foto ${index + 1}?`)) {
     const photoId = h.attachedPhotos[index].id;
     deletePhotoFromIDB(photoId).then(() => {
@@ -969,9 +902,6 @@ function deletePhoto(index) {
   }
 }
 
-/* ==========================================================================
-   INICIALIZACIÓN Y CONFIGURACIÓN GLOBAL
-   ========================================================================== */
 function getFormattedTournamentLabel() {
   const now = new Date();
   const dd = String(now.getDate()).padStart(2, '0');
@@ -985,10 +915,10 @@ async function initApp() {
     if (e.data === 'tick') updateClock();
   };
   setupHeatSelectDeleteEvents();
-  
+
   try {
     await initIndexedDB();
-  } catch(err) {
+  } catch (err) {
     console.error("Fallo al iniciar IndexedDB", err);
   }
 
@@ -998,8 +928,8 @@ async function initApp() {
     handleBigButtonClick();
   });
 
-  window.addEventListener('beforeunload', (e) => {
-    if (window.isClearingData) return; 
+  window.addEventListener('beforeunload', () => {
+    if (window.isClearingData) return;
     saveCurrentHeatState();
     autoSaveToStorage();
   });
@@ -1007,6 +937,7 @@ async function initApp() {
   document.addEventListener("visibilitychange", function() {
     if (document.hidden) { autoSaveToStorage(); }
   });
+
   setInterval(() => {
     const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
     if (h && h.isRunning) { autoSaveToStorage(); }
@@ -1026,20 +957,14 @@ async function initApp() {
       SwimStore.state.tournamentName = savedState.tournamentName || "Torneo";
       SwimStore.state.sessionType = savedState.sessionType || "Finales";
       SwimStore.state.coachName = savedState.coachName || "Juan Albarracin";
-      
-      // FORZAR SIEMPRE LA URL MAESTRA DEL CÓDIGO
       SwimStore.state.googleWebAppUrl = CONFIG_MASTER_URL;
-      
       SwimStore.state.cardIdCounter = savedState.cardIdCounter || 0;
-      
+
       for (let hId in SwimStore.state.heatsData) {
         if (!SwimStore.state.heatsData[hId].hiddenLanes) SwimStore.state.heatsData[hId].hiddenLanes = [];
         if (!SwimStore.state.heatsData[hId].attachedPhotos) SwimStore.state.heatsData[hId].attachedPhotos = [];
-        
         SwimStore.state.heatsData[hId].laneData.forEach(lane => {
-          if (typeof lane.marcaMinima === "undefined") {
-            lane.marcaMinima = "";
-          }
+          if (typeof lane.marcaMinima === "undefined") lane.marcaMinima = "";
         });
       }
 
@@ -1053,7 +978,7 @@ async function initApp() {
       document.getElementById('input-session-type').value = SwimStore.state.sessionType;
       document.getElementById('input-coach').value = SwimStore.state.coachName;
       document.getElementById('input-webapp-url').value = SwimStore.state.googleWebAppUrl;
-      
+
       updateMetaDisplays();
       renderHeatSelectOptions();
       if (!SwimStore.state.heatsData[SwimStore.state.currentHeatId]) {
@@ -1063,7 +988,7 @@ async function initApp() {
       loadHeatState(SwimStore.state.currentHeatId);
       processOutbox();
       return;
-    } catch(e) {
+    } catch (e) {
       console.error("Error al procesar estado desde IndexedDB", e);
     }
   }
@@ -1078,7 +1003,6 @@ async function initApp() {
   loadHeatState(1);
 }
 
-// ====== MODALES GUARDAR / SINCRONIZAR ======
 function openSaveSyncModal() {
   document.getElementById('input-webapp-url').value = SwimStore.state.googleWebAppUrl || "";
   document.getElementById('save-sync-modal').classList.add('open');
@@ -1097,18 +1021,13 @@ function applySyncUrlAndSync() {
   alert("Sincronización en curso. Revisa el estado en la barra inferior.");
 }
 
-// ====== ACTUALIZACIÓN DE FUNCIONES DE CONFIGURACIÓN DE TORNEO ======
 function openSettings() {
   const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
-  // 1. Datos estáticos
   document.getElementById('input-tournament-name').value = SwimStore.state.tournamentName;
   document.getElementById('input-session-type').value = SwimStore.state.sessionType;
   document.getElementById('input-coach').value = SwimStore.state.coachName;
-  // 2. Parámetros Físicos
   document.getElementById('input-lanes').value = SwimStore.state.activeLanes;
-  if (h) {
-    document.getElementById('input-splits').value = h.activeSplits || 4;
-  }
+  if (h) document.getElementById('input-splits').value = h.activeSplits || 4;
   document.getElementById('settings-modal').classList.add('open');
 }
 
@@ -1117,18 +1036,14 @@ function closeSettings() {
 }
 
 function saveSettings() {
-  // Guardar Torneo y Sesión
   SwimStore.state.tournamentName = document.getElementById('input-tournament-name').value.trim() || "Torneo";
   SwimStore.state.sessionType = document.getElementById('input-session-type').value;
   SwimStore.state.coachName = document.getElementById('input-coach').value.trim() || "Entrenador";
-  
-  // Guardar Parámetros de Pista
+
   const newActiveLanes = parseInt(document.getElementById('input-lanes').value, 10);
   const newSplits = parseInt(document.getElementById('input-splits').value, 10);
 
-  if (!isNaN(newActiveLanes) && newActiveLanes > 0) {
-    SwimStore.state.activeLanes = newActiveLanes;
-  }
+  if (!isNaN(newActiveLanes) && newActiveLanes > 0) SwimStore.state.activeLanes = newActiveLanes;
 
   const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
   if (h && !isNaN(newSplits) && newSplits > 0) {
@@ -1143,14 +1058,7 @@ function saveSettings() {
     let heat = SwimStore.state.heatsData[hId];
     while (heat.laneData.length < SwimStore.state.activeLanes) {
       let nextIdx = heat.laneData.length;
-      heat.laneData.push({
-        lane: nextIdx,
-        swimmerName: "",
-        seedTime: "",
-        marcaMinima: "",
-        splits: Array(heat.activeSplits || 4).fill(null),
-        officialTime: ""
-      });
+      heat.laneData.push({ lane: nextIdx, swimmerName: "", seedTime: "", marcaMinima: "", splits: Array(heat.activeSplits || 4).fill(null), officialTime: "" });
     }
   }
 
@@ -1162,30 +1070,22 @@ function saveSettings() {
 }
 
 function updateMetaDisplays() {
-  const label = getFormattedTournamentLabel();
-  document.getElementById('tournament-meta-display').innerText = label;
+  document.getElementById('tournament-meta-display').innerText = getFormattedTournamentLabel();
   document.getElementById('coach-name-display').innerText = SwimStore.state.coachName;
 }
 
 function toggleFullScreen() {
   if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-    if (document.documentElement.requestFullscreen) {
-      document.documentElement.requestFullscreen();
-    } else if (document.documentElement.webkitRequestFullscreen) {
-      document.documentElement.webkitRequestFullscreen();
-    }
+    if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
+    else if (document.documentElement.webkitRequestFullscreen) document.documentElement.webkitRequestFullscreen();
   } else {
-    if (document.exitFullscreen) {
-      document.exitFullscreen();
-    } else if (document.webkitExitFullscreen) {
-      document.webkitExitFullscreen();
-    }
+    if (document.exitFullscreen) document.exitFullscreen();
+    else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
   }
 }
 
 function openFileModal() { document.getElementById('file-options-modal').classList.add('open'); }
 function closeFileModal() { document.getElementById('file-options-modal').classList.remove('open'); }
-
 function openOffsetModal() { document.getElementById('offset-modal').classList.add('open'); }
 function closeOffsetModal() {
   document.getElementById('manual-offset-input').value = "";
@@ -1195,11 +1095,8 @@ function closeOffsetModal() {
 function applyTimeOffset(offsetMs) {
   const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
   if (!h) return;
-  if (h.isRunning) {
-    h.startTime -= offsetMs;
-  } else {
-    h.elapsedTime += offsetMs;
-  }
+  if (h.isRunning) h.startTime -= offsetMs;
+  else h.elapsedTime += offsetMs;
   document.getElementById('clock-display').innerText = formatTime(h.elapsedTime);
   closeOffsetModal();
   autoSaveToStorage();
@@ -1208,11 +1105,8 @@ function applyTimeOffset(offsetMs) {
 function applyManualOffset() {
   const inputEl = document.getElementById('manual-offset-input');
   const secondsVal = parseFloat(inputEl.value);
-  if (!isNaN(secondsVal) && secondsVal > 0) {
-    applyTimeOffset(Math.round(secondsVal * 1000));
-  } else {
-    alert("Por favor ingresa una cantidad válida de segundos.");
-  }
+  if (!isNaN(secondsVal) && secondsVal > 0) applyTimeOffset(Math.round(secondsVal * 1000));
+  else alert("Por favor ingresa una cantidad válida de segundos.");
 }
 
 function exportSessionJSON() {
@@ -1261,15 +1155,12 @@ function importSessionJSON(event) {
         SwimStore.state.sessionType = parsed.sessionType || "Finales";
         SwimStore.state.coachName = parsed.coachName || "Juan Albarracin";
         SwimStore.state.cardIdCounter = parsed.cardIdCounter || 0;
-        
+
         for (let hId in SwimStore.state.heatsData) {
           if (!SwimStore.state.heatsData[hId].hiddenLanes) SwimStore.state.heatsData[hId].hiddenLanes = [];
           if (!SwimStore.state.heatsData[hId].attachedPhotos) SwimStore.state.heatsData[hId].attachedPhotos = [];
-          
           SwimStore.state.heatsData[hId].laneData.forEach(lane => {
-            if (typeof lane.marcaMinima === "undefined") {
-              lane.marcaMinima = "";
-            }
+            if (typeof lane.marcaMinima === "undefined") lane.marcaMinima = "";
           });
         }
 
@@ -1335,7 +1226,7 @@ function deleteCurrentHeat() {
 function autoSaveToStorage() {
   saveCurrentHeatState();
   SwimStore.state.hasUnsyncedChanges = true;
-  
+
   const stateToSave = {
     tournamentName: SwimStore.state.tournamentName,
     sessionType: SwimStore.state.sessionType,
@@ -1347,7 +1238,7 @@ function autoSaveToStorage() {
     activeLanes: SwimStore.state.activeLanes,
     cardIdCounter: SwimStore.state.cardIdCounter
   };
-  
+
   saveStateToIDB(stateToSave).then(() => {
     const ind = document.getElementById('save-status-indicator');
     if (ind && !ind.innerText.includes("☁️")) {
@@ -1360,30 +1251,24 @@ function autoSaveToStorage() {
 
 function clearLocalStorage() {
   if (confirm("¿Estás seguro de borrar todos los datos acumulados, INCLUYENDO FOTOGRAFÍAS, en esta base de datos local?")) {
-    
-    // Bloqueamos el evento beforeunload para que no haga auto-guardado al recargar
-    window.isClearingData = true; 
-
+    window.isClearingData = true;
     if (db) {
       try {
         const transaction = db.transaction(['sessions', 'outbox', 'photos'], 'readwrite');
         transaction.objectStore('sessions').clear();
         transaction.objectStore('outbox').clear();
-        transaction.objectStore('photos').clear(); 
-        
+        transaction.objectStore('photos').clear();
+
         transaction.oncomplete = () => {
-          // 1. Forzar 1 carril y 4 splits por defecto
           SwimStore.state.activeLanes = 1;
-          SwimStore.state.heatsData = { 1: createEmptyHeatState("Prueba 1", 4) }; 
+          SwimStore.state.heatsData = { 1: createEmptyHeatState("Prueba 1", 4) };
           SwimStore.state.currentHeatId = 1;
           SwimStore.state.totalHeatsCount = 1;
-          
-          // 2. Limpiar los metadatos y aplicar la maestra
           SwimStore.state.tournamentName = "";
           SwimStore.state.coachName = "";
-          SwimStore.state.sessionType = "Finales"; 
+          SwimStore.state.sessionType = "Finales";
           SwimStore.state.googleWebAppUrl = CONFIG_MASTER_URL;
-          
+
           const cleanState = {
             tournamentName: SwimStore.state.tournamentName,
             sessionType: SwimStore.state.sessionType,
@@ -1395,21 +1280,11 @@ function clearLocalStorage() {
             activeLanes: SwimStore.state.activeLanes,
             cardIdCounter: 0
           };
-          
-          saveStateToIDB(cleanState).then(() => {
-            location.reload();
-          }).catch((e) => {
-            console.error("Error guardando el estado limpio, recargando de todos modos:", e);
-            location.reload();
-          });
+
+          saveStateToIDB(cleanState).then(() => location.reload()).catch(() => location.reload());
         };
-        
-        transaction.onerror = (e) => {
-          console.error("Error en transacción al limpiar IndexedDB:", e);
-          location.reload();
-        };
+        transaction.onerror = () => location.reload();
       } catch (err) {
-        console.error("Fallo general limpiando DB:", err);
         location.reload();
       }
     } else {
@@ -1431,14 +1306,7 @@ function calculateSplitsForDistance(distance) {
 function createEmptyHeatState(defaultName, initialSplits = 4) {
   let initialLanes = [];
   for (let i = 0; i < SwimStore.state.activeLanes; i++) {
-    initialLanes.push({
-      lane: i,
-      swimmerName: "",
-      seedTime: "",
-      marcaMinima: "",
-      splits: Array(initialSplits).fill(null),
-      officialTime: ""
-    });
+    initialLanes.push({ lane: i, swimmerName: "", seedTime: "", marcaMinima: "", splits: Array(initialSplits).fill(null), officialTime: "" });
   }
   return {
     name: defaultName,
@@ -1492,16 +1360,12 @@ function goToPreviousHeat() {
   saveCurrentHeatState();
   const heatIds = getSortedHeatIds();
   let currentIndex = heatIds.indexOf(SwimStore.state.currentHeatId);
-
   if (currentIndex > 0) {
     SwimStore.state.currentHeatId = heatIds[currentIndex - 1];
-    
     renderHeatSelectOptions();
     document.getElementById('heat-select').value = SwimStore.state.currentHeatId;
     loadHeatState(SwimStore.state.currentHeatId);
     autoSaveToStorage();
-  } else {
-    console.log("Ya estás en la primera prueba.");
   }
 }
 
@@ -1521,13 +1385,9 @@ function goToNextTargetHeat() {
   if (targetHeatId === null) {
     let furthestTimedIndex = -1;
     for (let i = 0; i < heatIds.length; i++) {
-      if (hasHeatTimes(SwimStore.state.heatsData[heatIds[i]])) {
-        furthestTimedIndex = i;
-      }
+      if (hasHeatTimes(SwimStore.state.heatsData[heatIds[i]])) furthestTimedIndex = i;
     }
-
     let searchStartIndex = Math.max(currentIndex, furthestTimedIndex) + 1;
-
     for (let i = searchStartIndex; i < heatIds.length; i++) {
       if (!hasHeatTimes(SwimStore.state.heatsData[heatIds[i]])) {
         targetHeatId = heatIds[i];
@@ -1561,10 +1421,7 @@ function hasHeatTimes(heatObj) {
 function renderHeatSelectOptions() {
   const select = document.getElementById('heat-select');
   select.innerHTML = "";
-  
-  const sortedIds = getSortedHeatIds();
-  
-  sortedIds.forEach(id => {
+  getSortedHeatIds().forEach(id => {
     const opt = document.createElement('option');
     opt.value = id;
     opt.innerText = SwimStore.state.heatsData[id].name;
@@ -1577,11 +1434,10 @@ function saveCurrentHeatState() {
   if (!h) return;
   h.laneData.forEach(l => {
     const offInput = document.getElementById(`official-input-${l.lane}`);
-    if (offInput) { l.officialTime = offInput.value; }
+    if (offInput) l.officialTime = offInput.value;
   });
   h.cards = [];
-  const cardsInPool = document.querySelectorAll('#cards-pool .time-card');
-  cardsInPool.forEach(card => {
+  document.querySelectorAll('#cards-pool .time-card').forEach(card => {
     h.cards.push({ id: card.id, ms: parseInt(card.dataset.ms) });
   });
 }
@@ -1594,7 +1450,7 @@ function loadHeatState(heatId) {
   timerWorker.postMessage('stop');
   renderLanes();
   document.getElementById('cards-pool').innerHTML = "";
-  h.cards.forEach(cardData => { createTimeCard(cardData.ms, cardData.id); });
+  h.cards.forEach(cardData => createTimeCard(cardData.ms, cardData.id));
   document.getElementById('clock-display').innerText = formatTime(h.elapsedTime);
   if (h.isRunning) {
     timerWorker.postMessage('start');
@@ -1616,14 +1472,11 @@ function renderLanes() {
   const splitsCount = h.activeSplits || 4;
   if (!h.hiddenLanes) h.hiddenLanes = [];
 
-  let lanesToDisplay = h.laneData.filter(l => 
-    (l.swimmerName.trim() !== "" || l.officialTime !== "" || l.splits.some(s => s !== null)) && 
+  let lanesToDisplay = h.laneData.filter(l =>
+    (l.swimmerName.trim() !== "" || l.officialTime !== "" || l.splits.some(s => s !== null)) &&
     !h.hiddenLanes.includes(l.lane)
   );
-
-  if (lanesToDisplay.length === 0) { 
-    lanesToDisplay = h.laneData.filter(l => !h.hiddenLanes.includes(l.lane)); 
-  }
+  if (lanesToDisplay.length === 0) lanesToDisplay = h.laneData.filter(l => !h.hiddenLanes.includes(l.lane));
   lanesToDisplay.sort((a, b) => a.lane - b.lane);
 
   lanesToDisplay.forEach((laneObj) => {
@@ -1646,8 +1499,7 @@ function renderLanes() {
     header.className = 'lane-header seed-yellow';
     header.id = `lane-header-${laneNum}`;
     const nameDiv = document.createElement('div');
-    const displayName = laneObj.swimmerName.trim() !== "" ? `${laneNum}. ${laneObj.swimmerName}` : `${laneNum}. Carril ${laneNum}`;
-    nameDiv.innerText = displayName;
+    nameDiv.innerText = laneObj.swimmerName.trim() !== "" ? `${laneNum}. ${laneObj.swimmerName}` : `${laneNum}. Carril ${laneNum}`;
     header.appendChild(nameDiv);
 
     if (laneObj.seedTime && laneObj.seedTime.trim() !== "") {
@@ -1656,10 +1508,8 @@ function renderLanes() {
       seedDiv.innerText = `[${laneObj.seedTime}]`;
       header.appendChild(seedDiv);
     }
-    header.title = "Doble clic para cambiar nombre y tiempo de siembra";
     attachDoubleTapEvent(header, laneNum);
     laneStickyGroup.appendChild(header);
-
     row.appendChild(laneStickyGroup);
 
     const splitsRow = document.createElement('div');
@@ -1672,10 +1522,10 @@ function renderLanes() {
       cell.dataset.lane = laneNum;
       cell.dataset.split = j;
       cell.ondragover = allowDrop;
-      cell.ondragenter = (e) => cell.classList.add('drag-over');
-      cell.ondragleave = (e) => cell.classList.remove('drag-over');
+      cell.ondragenter = () => cell.classList.add('drag-over');
+      cell.ondragleave = () => cell.classList.remove('drag-over');
       cell.ondrop = dropToCell;
-      cell.onclick = (e) => handleCellTap(cell);
+      cell.onclick = () => handleCellTap(cell);
 
       const label = document.createElement('span');
       label.className = 'split-label';
@@ -1687,17 +1537,14 @@ function renderLanes() {
     const totalBox = document.createElement('div');
     totalBox.className = 'total-time-container';
     totalBox.id = `total-container-${laneNum}`;
-    
     const totalLabel = document.createElement('span');
     totalLabel.className = 'total-label';
     totalLabel.id = `total-label-${laneNum}`;
     totalLabel.innerText = 'TOTAL';
-
     const totalVal = document.createElement('span');
     totalVal.className = 'total-display';
     totalVal.id = `total-display-${laneNum}`;
     totalVal.innerText = '--:--.--';
-
     totalBox.appendChild(totalLabel);
     totalBox.appendChild(totalVal);
     splitsRow.appendChild(totalBox);
@@ -1760,9 +1607,7 @@ function renderLanes() {
     hideBtn.onclick = () => {
       saveCurrentHeatState();
       if (!h.hiddenLanes) h.hiddenLanes = [];
-      if (!h.hiddenLanes.includes(laneNum)) {
-        h.hiddenLanes.push(laneNum);
-      }
+      if (!h.hiddenLanes.includes(laneNum)) h.hiddenLanes.push(laneNum);
       renderLanes();
       autoSaveToStorage();
     };
@@ -1771,22 +1616,18 @@ function renderLanes() {
     const minMarkBox = document.createElement('div');
     minMarkBox.className = 'min-mark-container seed-yellow';
     minMarkBox.id = `min-mark-container-${laneNum}`;
-
     const minMarkLabel = document.createElement('span');
     minMarkLabel.className = 'min-mark-label';
     minMarkLabel.innerText = 'Marca Mínima';
-
     const minMarkVal = document.createElement('span');
     minMarkVal.className = 'min-mark-display';
     minMarkVal.innerText = laneObj.marcaMinima && laneObj.marcaMinima.trim() !== "" ? laneObj.marcaMinima : '--:--.--';
-
     minMarkBox.appendChild(minMarkLabel);
     minMarkBox.appendChild(minMarkVal);
     splitsRow.appendChild(minMarkBox);
 
     row.appendChild(splitsRow);
     container.appendChild(row);
-
     recalculateLaneByNumber(laneNum);
   });
 }
@@ -1794,29 +1635,17 @@ function renderLanes() {
 function takeLaneSplit(laneNum) {
   const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
   if (!h) return;
-
-  let currentMs = 0;
-  if (h.isRunning) {
-    currentMs = performance.now() - h.startTime;
-  } else {
-    currentMs = h.elapsedTime || 0;
-  }
-
+  const currentMs = h.isRunning ? (performance.now() - h.startTime) : (h.elapsedTime || 0);
   const laneObj = h.laneData.find(l => l.lane === laneNum);
   if (!laneObj) return;
-
   const emptyIndex = laneObj.splits.findIndex(s => s === null);
   if (emptyIndex === -1) {
     alert(`El Carril ${laneNum} ya tiene todos sus splits completados.`);
     return;
   }
-
   SwimStore.state.cardIdCounter++;
-  const newCardId = `card-${SwimStore.state.cardIdCounter}`;
-  
-  laneObj.splits[emptyIndex] = { totalMs: currentMs, cardId: newCardId };
+  laneObj.splits[emptyIndex] = { totalMs: currentMs, cardId: `card-${SwimStore.state.cardIdCounter}` };
   recalculateLaneByNumber(laneNum);
-
   autoSaveToStorage();
 }
 
@@ -1831,24 +1660,20 @@ function openUnhideLaneModal() {
     return;
   }
 
-  h.hiddenLanes.sort((a,b) => a - b).forEach(laneNum => {
+  h.hiddenLanes.sort((a, b) => a - b).forEach(laneNum => {
     const label = document.createElement('label');
     label.style.cssText = "display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: bold; cursor: pointer; padding: 6px; background: #f8f9fa; border-radius: 4px; border: 1px solid #ddd;";
-    
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.value = laneNum;
     checkbox.className = 'unhide-checkbox';
     checkbox.style.cssText = "width: 16px; height: 16px; cursor: pointer;";
-
     const textSpan = document.createElement('span');
     textSpan.innerText = `Carril ${laneNum}`;
-
     label.appendChild(checkbox);
     label.appendChild(textSpan);
     listContainer.appendChild(label);
   });
-
   document.getElementById('unhide-lane-modal').classList.add('open');
 }
 
@@ -1864,10 +1689,8 @@ function restoreSelectedHiddenLanes() {
     alert("Por favor selecciona al menos un carril para restaurar.");
     return;
   }
-
   const lanesToRestore = Array.from(checkboxes).map(cb => parseInt(cb.value, 10));
   h.hiddenLanes = h.hiddenLanes.filter(l => !lanesToRestore.includes(l));
-
   renderLanes();
   autoSaveToStorage();
   closeUnhideLaneModal();
@@ -1882,9 +1705,8 @@ function updateLaneHeaderColor(laneNum) {
   const totalBoxEl = document.getElementById(`total-container-${laneNum}`);
   const totalLabelEl = document.getElementById(`total-label-${laneNum}`);
   const totalDisplayEl = document.getElementById(`total-display-${laneNum}`);
-  
   if (!laneObj || !headerEl) return;
-  
+
   const applyColorClass = (colorClass) => {
     headerEl.classList.remove('seed-yellow', 'seed-green', 'seed-red');
     headerEl.classList.add(colorClass);
@@ -1904,7 +1726,6 @@ function updateLaneHeaderColor(laneNum) {
 
   let lastPlacedIndex = -1;
   let accumulatedMs = 0;
-
   for (let i = 0; i < laneObj.splits.length; i++) {
     if (laneObj.splits[i] && laneObj.splits[i].totalMs !== null) {
       lastPlacedIndex = i;
@@ -1933,42 +1754,29 @@ function updateLaneHeaderColor(laneNum) {
 
   if (laneObj.officialTime && laneObj.officialTime.trim() !== "") {
     const officialMs = parseTimeToMs(laneObj.officialTime);
-    if (!isNaN(officialMs) && officialMs > 0) {
-      computedMsForColor = officialMs;
-    }
+    if (!isNaN(officialMs) && officialMs > 0) computedMsForColor = officialMs;
   }
 
-  if (isNaN(seedMs) || seedMs <= 0 || computedMsForColor <= 0) {
-    applyColorClass('seed-yellow');
-  } else if (computedMsForColor < (seedMs - 10)) {
-    applyColorClass('seed-green');
-  } else if (computedMsForColor > (seedMs + 10)) {
-    applyColorClass('seed-red');
-  } else {
-    applyColorClass('seed-yellow');
-  }
+  if (isNaN(seedMs) || seedMs <= 0 || computedMsForColor <= 0) applyColorClass('seed-yellow');
+  else if (computedMsForColor < (seedMs - 10)) applyColorClass('seed-green');
+  else if (computedMsForColor > (seedMs + 10)) applyColorClass('seed-red');
+  else applyColorClass('seed-yellow');
 
   const minMarkBoxEl = document.getElementById(`min-mark-container-${laneNum}`);
   if (minMarkBoxEl) {
     const minMarkStr = laneObj.marcaMinima ? laneObj.marcaMinima.trim() : "";
     const minMarkMs = minMarkStr ? parseTimeToMs(minMarkStr) : NaN;
-    
     minMarkBoxEl.classList.remove('seed-yellow', 'seed-green', 'seed-red');
-    
-    if (isNaN(minMarkMs) || minMarkMs <= 0 || computedMsForColor <= 0) {
-      minMarkBoxEl.classList.add('seed-yellow');
-    } else if (computedMsForColor <= minMarkMs) {
-      minMarkBoxEl.classList.add('seed-green');
-    } else {
-      minMarkBoxEl.classList.add('seed-red');
-    }
+    if (isNaN(minMarkMs) || minMarkMs <= 0 || computedMsForColor <= 0) minMarkBoxEl.classList.add('seed-yellow');
+    else if (computedMsForColor <= minMarkMs) minMarkBoxEl.classList.add('seed-green');
+    else minMarkBoxEl.classList.add('seed-red');
   }
 }
 
 function attachDoubleTapEvent(element, laneNum) {
   let lastTap = 0;
   element.ondblclick = () => editSwimmerInfo(laneNum);
-  element.addEventListener('touchend', function (e) {
+  element.addEventListener('touchend', function(e) {
     const currentTime = new Date().getTime();
     const tapLength = currentTime - lastTap;
     if (tapLength < 300 && tapLength > 0) {
@@ -1984,13 +1792,11 @@ function editSwimmerInfo(laneNum) {
   if (!h) return;
   const laneObj = h.laneData.find(l => l.lane === laneNum);
   if (!laneObj) return;
-  const currentName = laneObj.swimmerName || "";
-  const currentSeed = laneObj.seedTime || "";
-  const newName = prompt(`Ingresa el nombre del nadador para el Carril ${laneNum}:`, currentName);
+  const newName = prompt(`Ingresa el nombre del nadador para el Carril ${laneNum}:`, laneObj.swimmerName || "");
   if (newName !== null) {
     laneObj.swimmerName = newName.trim();
-    const newSeed = prompt(`Ingresa el tiempo de siembra (ej. 2:16.20):`, currentSeed);
-    if (newSeed !== null) { laneObj.seedTime = newSeed.trim(); }
+    const newSeed = prompt(`Ingresa el tiempo de siembra (ej. 2:16.20):`, laneObj.seedTime || "");
+    if (newSeed !== null) laneObj.seedTime = newSeed.trim();
     renderLanes();
     loadHeatState(SwimStore.state.currentHeatId);
     autoSaveToStorage();
@@ -2006,37 +1812,29 @@ function closeRosterModal() {
 
 function fetchRosterFromCloud() {
   const url = SwimStore.state.googleWebAppUrl;
-  
   if (!url || url.trim() === "") {
     alert("⚠️ Primero debes configurar la URL de tu Google App Script en la sección 'Guardar / Sincronizar'.");
     return;
   }
-
   const btn = document.getElementById('btn-cloud-roster');
   const originalText = btn.innerText;
   btn.innerText = "⏳ Descargando datos desde Sheets...";
   btn.disabled = true;
 
-  const fetchUrl = url + "?action=getRoster";
-
-  fetch(fetchUrl)
+  fetch(url + "?action=getRoster")
     .then(response => response.json())
     .then(data => {
       btn.innerText = originalText;
       btn.disabled = false;
-
       if (data.result === "success" && data.rosterData) {
         const rawText = data.rosterData.join('\n');
-        
         if (rawText.trim() === "") {
-            alert("La Columna M de la pestaña 'Programacion' está vacía.");
-            return;
+          alert("La Columna M de la pestaña 'Programacion' está vacía.");
+          return;
         }
-        
         parseAndApplyRosterData(rawText);
-        
       } else {
-        alert("Error al obtener los datos de la nube: " + (data.error || "Respuesta desconocida."));
+        alert("Error al obtener los datos de la nube: " + (data.error || data.message || "Respuesta desconocida."));
       }
     })
     .catch(err => {
@@ -2050,12 +1848,10 @@ function fetchRosterFromCloud() {
 function processRosterImport() {
   const fileInput = document.getElementById('roster-file-input');
   const textInput = document.getElementById('roster-text-input').value.trim();
-  
   if (fileInput.files.length > 0) {
-    const file = fileInput.files[0];
     const reader = new FileReader();
     reader.onload = function(e) { parseAndApplyRosterData(e.target.result); };
-    reader.readAsText(file);
+    reader.readAsText(fileInput.files[0]);
   } else if (textInput !== "") {
     parseAndApplyRosterData(textInput);
   } else {
@@ -2073,11 +1869,9 @@ function parseAndApplyRosterData(rawText) {
   const delimiter = sampleLine.includes(';') ? ';' : ',';
 
   lines.forEach((line) => {
-    if (!line.trim() || line.startsWith('#')) return; 
-    
+    if (!line.trim() || line.startsWith('#')) return;
     const cleanLine = line.replace(/"/g, '');
     const parts = cleanLine.split(delimiter).map(p => p.trim());
-    
     if (parts.length >= 7) {
       const pruebaNum = parts[0];
       const distancia = parts[1];
@@ -2087,15 +1881,14 @@ function parseAndApplyRosterData(rawText) {
       const swimmerName = parts[5];
       const seedTime = parts[6];
       const marcaMinima = parts.length > 7 ? parts[7] : "";
-
-      if (isNaN(targetLaneNum)) return; 
+      if (isNaN(targetLaneNum)) return;
 
       const heatFullName = `Prueba ${pruebaNum} - ${distancia}m ${estilo} (${serieName})`;
       const requiredSplits = calculateSplitsForDistance(distancia);
 
       let targetHeatId = null;
       for (let hId in SwimStore.state.heatsData) {
-        if (SwimStore.state.heatsData[hId].name.toLowerCase() === heatFullName.toLowerCase()) {
+        if (normalizeText(SwimStore.state.heatsData[hId].name) === normalizeText(heatFullName)) {
           targetHeatId = hId;
           break;
         }
@@ -2110,28 +1903,13 @@ function parseAndApplyRosterData(rawText) {
       if (!heatObj.hiddenLanes) heatObj.hiddenLanes = [];
 
       while (heatObj.laneData.length <= targetLaneNum) {
-        const nextLaneIndex = heatObj.laneData.length;
-        heatObj.laneData.push({
-          lane: nextLaneIndex,
-          swimmerName: "",
-          seedTime: "",
-          marcaMinima: "",
-          splits: Array(heatObj.activeSplits).fill(null),
-          officialTime: ""
-        });
+        heatObj.laneData.push({ lane: heatObj.laneData.length, swimmerName: "", seedTime: "", marcaMinima: "", splits: Array(heatObj.activeSplits).fill(null), officialTime: "" });
       }
-      if (targetLaneNum > maxLaneDetected) { maxLaneDetected = targetLaneNum; }
-      
+      if (targetLaneNum > maxLaneDetected) maxLaneDetected = targetLaneNum;
+
       let targetLaneObj = heatObj.laneData.find(l => l.lane === targetLaneNum);
       if (!targetLaneObj) {
-        targetLaneObj = {
-          lane: targetLaneNum,
-          swimmerName: "",
-          seedTime: "",
-          marcaMinima: "",
-          splits: Array(heatObj.activeSplits).fill(null),
-          officialTime: ""
-        };
+        targetLaneObj = { lane: targetLaneNum, swimmerName: "", seedTime: "", marcaMinima: "", splits: Array(heatObj.activeSplits).fill(null), officialTime: "" };
         heatObj.laneData.push(targetLaneObj);
       }
       heatObj.laneData.forEach(l => {
@@ -2153,8 +1931,7 @@ function parseAndApplyRosterData(rawText) {
   if ((maxLaneDetected + 1) > SwimStore.state.activeLanes) {
     SwimStore.state.activeLanes = maxLaneDetected + 1;
     const laneSelect = document.getElementById('input-lanes');
-    let optionExists = Array.from(laneSelect.options).some(opt => parseInt(opt.value) === SwimStore.state.activeLanes);
-    if (!optionExists) {
+    if (!Array.from(laneSelect.options).some(opt => parseInt(opt.value) === SwimStore.state.activeLanes)) {
       const newOpt = document.createElement('option');
       newOpt.value = SwimStore.state.activeLanes;
       newOpt.text = `${SwimStore.state.activeLanes} Carriles (Importado)`;
@@ -2162,6 +1939,7 @@ function parseAndApplyRosterData(rawText) {
     }
     laneSelect.value = SwimStore.state.activeLanes;
   }
+
   saveCurrentHeatState();
   renderHeatSelectOptions();
   if (lastTargetHeatId) {
@@ -2174,17 +1952,11 @@ function parseAndApplyRosterData(rawText) {
   alert(`¡Sincronización de series exitosa! ${importedCount} nadadores importados correctamente.`);
 }
 
-
-/* ==========================================================================
-   LÓGICA INTELIGENTE DE AJUSTE A TIEMPO OFICIAL
-   ========================================================================== */
 function adjustSplitsToOfficial(laneNum) {
   const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
   if (!h) return;
-  
   const laneObj = h.laneData.find(l => l.lane === laneNum);
   if (!laneObj || !laneObj.officialTime) return;
-
   const officialMs = parseTimeToMs(laneObj.officialTime);
   if (isNaN(officialMs) || officialMs <= 0) return;
 
@@ -2197,16 +1969,10 @@ function adjustSplitsToOfficial(laneNum) {
   }
 
   const lastSplitIndex = h.activeSplits - 1;
-
-  if (lastValidIdx === -1) {
+  if (lastValidIdx === -1 || lastValidIdx < lastSplitIndex) {
     SwimStore.state.cardIdCounter++;
     laneObj.splits[lastSplitIndex] = { totalMs: officialMs, cardId: `card-${SwimStore.state.cardIdCounter}` };
-  } 
-  else if (lastValidIdx < lastSplitIndex) {
-    SwimStore.state.cardIdCounter++;
-    laneObj.splits[lastSplitIndex] = { totalMs: officialMs, cardId: `card-${SwimStore.state.cardIdCounter}` };
-  } 
-  else {
+  } else {
     const recordedTotalMs = laneObj.splits[lastValidIdx].totalMs;
     if (recordedTotalMs > 0) {
       const ratio = officialMs / recordedTotalMs;
@@ -2228,7 +1994,7 @@ let touchStartX = 0;
 let touchStartY = 0;
 
 function addTouchEvents(el) {
-  if (el.dataset.touchBound === "true") return; 
+  if (el.dataset.touchBound === "true") return;
   el.addEventListener('touchstart', handleTouchStart, { passive: true });
   el.addEventListener('touchmove', handleTouchMove, { passive: false });
   el.addEventListener('touchend', handleTouchEnd, { passive: true });
@@ -2241,14 +2007,12 @@ function handleTouchStart(e) {
   touchStartX = touch.clientX;
   touchStartY = touch.clientY;
   const currentTarget = e.currentTarget;
-
   if (touchHoldTimer) clearTimeout(touchHoldTimer);
 
   touchHoldTimer = setTimeout(() => {
     touchDragElement = currentTarget;
     touchDragElement.classList.add('hold-active');
     selectSourceElement(touchDragElement);
-
     touchClone = touchDragElement.cloneNode(true);
     touchClone.classList.add('drag-clone');
     document.body.appendChild(touchClone);
@@ -2258,22 +2022,15 @@ function handleTouchStart(e) {
 
 function handleTouchMove(e) {
   const touch = e.touches[0];
-  const deltaX = Math.abs(touch.clientX - touchStartX);
-  const deltaY = Math.abs(touch.clientY - touchStartY);
-
   if (!touchDragElement) {
-    if (deltaX > 8 || deltaY > 8) {
-      if (touchHoldTimer) {
-        clearTimeout(touchHoldTimer);
-        touchHoldTimer = null;
-      }
+    if ((Math.abs(touch.clientX - touchStartX) > 8 || Math.abs(touch.clientY - touchStartY) > 8) && touchHoldTimer) {
+      clearTimeout(touchHoldTimer);
+      touchHoldTimer = null;
     }
     return;
   }
-
   e.preventDefault();
   moveCloneAt(touch.clientX, touch.clientY);
-  
   const elemBelow = document.elementFromPoint(touch.clientX, touch.clientY);
   document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
   if (elemBelow) {
@@ -2283,13 +2040,8 @@ function handleTouchMove(e) {
 }
 
 function handleTouchEnd(e) {
-  if (touchHoldTimer) {
-    clearTimeout(touchHoldTimer);
-    touchHoldTimer = null;
-  }
-
+  if (touchHoldTimer) { clearTimeout(touchHoldTimer); touchHoldTimer = null; }
   if (!touchDragElement) return;
-
   touchDragElement.classList.remove('hold-active');
   if (touchClone) { touchClone.remove(); touchClone = null; }
   document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
@@ -2301,7 +2053,6 @@ function handleTouchEnd(e) {
     const pool = elemBelow.closest('#cards-pool');
     const dupBtn = elemBelow.closest('#btn-duplicate');
     const delBtn = elemBelow.closest('#btn-delete');
-
     if (splitCell) executeMove(touchDragElement, splitCell);
     else if (pool) executeMoveToPool(touchDragElement);
     else if (dupBtn) executeDuplicate(touchDragElement);
@@ -2310,11 +2061,8 @@ function handleTouchEnd(e) {
   touchDragElement = null;
 }
 
-function handleTouchCancel(e) {
-  if (touchHoldTimer) {
-    clearTimeout(touchHoldTimer);
-    touchHoldTimer = null;
-  }
+function handleTouchCancel() {
+  if (touchHoldTimer) { clearTimeout(touchHoldTimer); touchHoldTimer = null; }
   if (touchDragElement) {
     touchDragElement.classList.remove('hold-active');
     if (touchClone) { touchClone.remove(); touchClone = null; }
@@ -2405,45 +2153,33 @@ function executeMoveToPool(sourceEl) {
     const laneNum = parseInt(sourceEl.dataset.lane);
     const splitIdx = parseInt(sourceEl.dataset.split);
     const laneObj = h.laneData.find(l => l.lane === laneNum);
-    if (laneObj) {
-      const data = laneObj.splits[splitIdx];
-      if (data) {
-        returnTimeToPool(data.totalMs, data.cardId);
-        laneObj.splits[splitIdx] = null;
-        recalculateLaneByNumber(laneNum);
-        autoSaveToStorage();
-      }
+    if (laneObj && laneObj.splits[splitIdx]) {
+      returnTimeToPool(laneObj.splits[splitIdx].totalMs, laneObj.splits[splitIdx].cardId);
+      laneObj.splits[splitIdx] = null;
+      recalculateLaneByNumber(laneNum);
+      autoSaveToStorage();
     }
   }
-  if (selectedSource) {
-    selectedSource.classList.remove('selected');
-    selectedSource = null;
-  }
+  if (selectedSource) { selectedSource.classList.remove('selected'); selectedSource = null; }
   document.querySelectorAll('.selected').forEach(c => c.classList.remove('selected'));
 }
 
 function executeDuplicate(sourceEl) {
-  const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
   let timeMs = 0;
   if (sourceEl.classList.contains('time-card')) {
     timeMs = parseInt(sourceEl.dataset.ms);
   } else if (sourceEl.classList.contains('split-cell')) {
-    const laneNum = parseInt(sourceEl.dataset.lane);
-    const splitIdx = parseInt(sourceEl.dataset.split);
-    const laneObj = h.laneData.find(l => l.lane === laneNum);
-    if (laneObj) {
-      const data = laneObj.splits[splitIdx];
-      if (data) timeMs = data.totalMs;
+    const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
+    const laneObj = h.laneData.find(l => l.lane === parseInt(sourceEl.dataset.lane));
+    if (laneObj && laneObj.splits[parseInt(sourceEl.dataset.split)]) {
+      timeMs = laneObj.splits[parseInt(sourceEl.dataset.split)].totalMs;
     }
   }
   if (timeMs > 0) {
     createTimeCard(timeMs);
     autoSaveToStorage();
   }
-  if (selectedSource) {
-    selectedSource.classList.remove('selected');
-    selectedSource = null;
-  }
+  if (selectedSource) { selectedSource.classList.remove('selected'); selectedSource = null; }
   document.querySelectorAll('.selected').forEach(c => c.classList.remove('selected'));
 }
 
@@ -2460,10 +2196,7 @@ function executeDelete(sourceEl) {
       recalculateLaneByNumber(laneNum);
     }
   }
-  if (selectedSource) {
-    selectedSource.classList.remove('selected');
-    selectedSource = null;
-  }
+  if (selectedSource) { selectedSource.classList.remove('selected'); selectedSource = null; }
   document.querySelectorAll('.selected').forEach(c => c.classList.remove('selected'));
   autoSaveToStorage();
 }
@@ -2473,7 +2206,6 @@ function dropToCell(e) { e.preventDefault(); e.currentTarget.classList.remove('d
 function dropToPool(e) { e.preventDefault(); document.getElementById('cards-pool').classList.remove('drag-over'); const d = document.getElementById(e.dataTransfer.getData('text/plain')); if (d) executeMoveToPool(d); }
 function dropDuplicate(e) { e.preventDefault(); document.getElementById('btn-duplicate').classList.remove('drag-over'); const d = document.getElementById(e.dataTransfer.getData('text/plain')); if (d) executeDuplicate(d); }
 function dropDelete(e) { e.preventDefault(); document.getElementById('btn-delete').classList.remove('drag-over'); const d = document.getElementById(e.dataTransfer.getData('text/plain')); if (d) executeDelete(d); }
-
 function duplicateSelectedCard() { if (selectedSource) executeDuplicate(selectedSource); }
 function deleteSelectedCard() { if (selectedSource) executeDelete(selectedSource); }
 
@@ -2555,7 +2287,6 @@ function handleBigButtonClick() {
   } else if (h.isRunning) {
     const currentMs = performance.now() - h.startTime;
     const visibleRows = document.querySelectorAll('.lane-row');
-
     if (visibleRows.length === 1) {
       const singleLaneNum = parseInt(visibleRows[0].dataset.laneNumber);
       const laneObj = h.laneData.find(l => l.lane === singleLaneNum);
@@ -2563,13 +2294,10 @@ function handleBigButtonClick() {
         const emptyIndex = laneObj.splits.findIndex(s => s === null);
         if (emptyIndex !== -1) {
           SwimStore.state.cardIdCounter++;
-          const newCardId = `card-${SwimStore.state.cardIdCounter}`;
-          laneObj.splits[emptyIndex] = { totalMs: currentMs, cardId: newCardId };
+          laneObj.splits[emptyIndex] = { totalMs: currentMs, cardId: `card-${SwimStore.state.cardIdCounter}` };
           recalculateLaneByNumber(singleLaneNum);
           autoSaveToStorage();
           return;
-        } else {
-          alert("Ya se han completado todos los splits configurados para este carril.");
         }
       }
     }
@@ -2602,7 +2330,7 @@ function resetClock() {
   document.getElementById('cards-pool').innerHTML = "";
   h.cards = [];
   h.attachedPhotos = [];
-   h.laneData.forEach((l) => {
+  h.laneData.forEach((l) => {
     l.splits = Array(h.activeSplits).fill(null);
     l.officialTime = "";
   });
@@ -2618,7 +2346,7 @@ function setBigButton(text, bgColor) {
 
 function updateClock() {
   const h = SwimStore.state.heatsData[SwimStore.state.currentHeatId];
-  if (!h.isRunning) return;
+  if (!h || !h.isRunning) return;
   h.elapsedTime = performance.now() - h.startTime;
   document.getElementById('clock-display').innerText = formatTime(h.elapsedTime);
 }
@@ -2632,8 +2360,7 @@ function formatTime(ms) {
 
 function parseTimeToMs(timeStr) {
   if (!timeStr) return NaN;
-  timeStr = timeStr.trim().split(' ')[0]; 
-  
+  timeStr = timeStr.trim().split(' ')[0];
   let parts = timeStr.split(':');
   let minutes = 0, seconds = 0, hundredths = 0;
   if (parts.length === 2) {
@@ -2656,21 +2383,13 @@ function applyFormatting(inputEl) {
   if (!val) return;
   val = val.replace(',', '.');
   if (/^\d+$/.test(val)) {
-    if (val.length === 4) {
-      val = val.slice(0, 2) + '.' + val.slice(2);
-    } else if (val.length >= 5) {
-      val = val.slice(0, -4) + ':' + val.slice(-4, -2) + '.' + val.slice(-2);
-    }
+    if (val.length === 4) val = val.slice(0, 2) + '.' + val.slice(2);
+    else if (val.length >= 5) val = val.slice(0, -4) + ':' + val.slice(-4, -2) + '.' + val.slice(-2);
   }
   let ms = parseTimeToMs(val);
-  if (!isNaN(ms) && ms > 0) {
-    inputEl.value = formatTime(ms);
-  }
+  if (!isNaN(ms) && ms > 0) inputEl.value = formatTime(ms);
 }
 
-/* ==========================================================================
-   MOTOR DE ZOOM Y PANEO PARA FOTOGRAFÍAS (MÓVIL Y ESCRITORIO)
-   ========================================================================== */
 const imageModalBox = document.getElementById('image-modal').querySelector('.modal-content');
 const previewImage = document.getElementById('full-image-preview');
 
@@ -2681,19 +2400,12 @@ function setImgTransform() {
 imageModalBox.addEventListener('wheel', (e) => {
   if (!document.getElementById('image-modal').classList.contains('open')) return;
   e.preventDefault();
-  
   const xs = (e.clientX - imgPointX) / imgScale;
   const ys = (e.clientY - imgPointY) / imgScale;
   const delta = (e.wheelDelta ? e.wheelDelta : -e.deltaY);
-  
   (delta > 0) ? (imgScale *= 1.2) : (imgScale /= 1.2);
-  
-  if (imgScale <= 1) { 
-    imgScale = 1; imgPointX = 0; imgPointY = 0; 
-  } else {
-    imgPointX = e.clientX - xs * imgScale;
-    imgPointY = e.clientY - ys * imgScale;
-  }
+  if (imgScale <= 1) { imgScale = 1; imgPointX = 0; imgPointY = 0; }
+  else { imgPointX = e.clientX - xs * imgScale; imgPointY = e.clientY - ys * imgScale; }
   setImgTransform();
 }, { passive: false });
 
@@ -2705,11 +2417,7 @@ imageModalBox.addEventListener('mousedown', (e) => {
   }
 });
 
-// Corrección de Fuga de Memoria
-window.addEventListener('mouseup', () => { 
-  imgPanning = false; 
-});
-
+window.addEventListener('mouseup', () => { imgPanning = false; });
 window.addEventListener('mousemove', (e) => {
   if (!imgPanning || imgScale <= 1 || !document.getElementById('image-modal').classList.contains('open')) return;
   e.preventDefault();
@@ -2720,13 +2428,9 @@ window.addEventListener('mousemove', (e) => {
 
 imageModalBox.addEventListener('touchstart', (e) => {
   if (!document.getElementById('image-modal').classList.contains('open')) return;
-  
   if (e.touches.length === 2) {
     e.preventDefault();
-    imgInitialPinchDist = Math.hypot(
-      e.touches[0].clientX - e.touches[1].clientX,
-      e.touches[0].clientY - e.touches[1].clientY
-    );
+    imgInitialPinchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
   } else if (e.touches.length === 1 && imgScale > 1) {
     imgStart = { x: e.touches[0].clientX - imgPointX, y: e.touches[0].clientY - imgPointY };
     imgPanning = true;
@@ -2736,29 +2440,17 @@ imageModalBox.addEventListener('touchstart', (e) => {
 imageModalBox.addEventListener('touchmove', (e) => {
   if (!document.getElementById('image-modal').classList.contains('open')) return;
   e.preventDefault();
-  
   if (e.touches.length === 2) {
-    const currentDistance = Math.hypot(
-      e.touches[0].clientX - e.touches[1].clientX,
-      e.touches[0].clientY - e.touches[1].clientY
-    );
-    
+    const currentDistance = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
     const cx = (e.touches[0].clientX + e.touches[1].clientX) / 2;
     const cy = (e.touches[0].clientY + e.touches[1].clientY) / 2;
     const xs = (cx - imgPointX) / imgScale;
     const ys = (cy - imgPointY) / imgScale;
-
     if (imgInitialPinchDist > 0) {
-      const zoomFactor = currentDistance / imgInitialPinchDist;
-      imgScale *= zoomFactor;
-      imgInitialPinchDist = currentDistance; 
-
-      if (imgScale <= 1) { 
-        imgScale = 1; imgPointX = 0; imgPointY = 0; 
-      } else {
-        imgPointX = cx - xs * imgScale;
-        imgPointY = cy - ys * imgScale;
-      }
+      imgScale *= (currentDistance / imgInitialPinchDist);
+      imgInitialPinchDist = currentDistance;
+      if (imgScale <= 1) { imgScale = 1; imgPointX = 0; imgPointY = 0; }
+      else { imgPointX = cx - xs * imgScale; imgPointY = cy - ys * imgScale; }
       setImgTransform();
     }
   } else if (e.touches.length === 1 && imgPanning && imgScale > 1) {
@@ -2771,20 +2463,64 @@ imageModalBox.addEventListener('touchmove', (e) => {
 imageModalBox.addEventListener('touchend', () => {
   imgInitialPinchDist = 0;
   imgPanning = false;
-});  
+});
 
-/* ==========================================================================
-   REGISTRO DEL SERVICE WORKER PARA PWA
-   ========================================================================== */
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').then(registration => {
-      console.log('ServiceWorker registrado con éxito. PWA Activa.', registration.scope);
-    }).catch(err => {
-      console.log('Fallo en el registro del ServiceWorker:', err);
+(function () {
+  if (!('serviceWorker' in navigator)) return;
+
+  const updateBanner = document.getElementById('sw-update-banner');
+  const reloadBtn = document.getElementById('sw-reload-btn');
+  let waitingWorker = null;
+  let reloadingOnce = false;
+
+  function showUpdatePrompt(worker) {
+    waitingWorker = worker;
+    if (updateBanner) updateBanner.style.display = 'flex';
+  }
+
+  function bindInstallingWorker(worker) {
+    if (!worker) return;
+    worker.addEventListener('statechange', () => {
+      if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+        showUpdatePrompt(worker);
+      }
     });
+  }
+
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (reloadingOnce) return;
+    reloadingOnce = true;
+    if (typeof saveCurrentHeatState === 'function') saveCurrentHeatState();
+    if (typeof autoSaveToStorage === 'function') autoSaveToStorage();
+    window.location.reload();
   });
-}
+
+  if (reloadBtn) {
+    reloadBtn.addEventListener('click', () => {
+      if (typeof saveCurrentHeatState === 'function') saveCurrentHeatState();
+      if (typeof autoSaveToStorage === 'function') autoSaveToStorage();
+      if (waitingWorker) waitingWorker.postMessage({ type: 'SKIP_WAITING' });
+      else window.location.reload();
+    });
+  }
+
+  window.addEventListener('load', async () => {
+    try {
+      const registration = await navigator.serviceWorker.register('./sw.js', { scope: './' });
+      if (registration.waiting && navigator.serviceWorker.controller) {
+        showUpdatePrompt(registration.waiting);
+      }
+      registration.addEventListener('updatefound', () => {
+        bindInstallingWorker(registration.installing);
+      });
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') registration.update().catch(() => {});
+      });
+    } catch (err) {
+      console.warn('Fallo en el registro del ServiceWorker:', err);
+    }
+  });
+})();
 </script>
 </body>
 </html>
